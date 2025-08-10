@@ -1,10 +1,6 @@
 {
   "Files": [
     {
-      "Id": "D:\\Grameen Bank\\MyFile\\Blood Donation Project\\BloodDonationManagement\\obj\\Debug\\net8.0\\scopedcss\\projectbundle\\BloodDonationManagement.bundle.scp.css",
-      "PackagePath": "staticwebassets\\BloodDonationManagement.37p1rut582.bundle.scp.css"
-    },
-    {
       "Id": "D:\\Grameen Bank\\MyFile\\Blood Donation Project\\BloodDonationManagement\\wwwroot\\css\\site.css",
       "PackagePath": "staticwebassets\\css\\site.css"
     },
