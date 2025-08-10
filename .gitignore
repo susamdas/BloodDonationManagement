@@ -1,0 +1,15 @@
+# Laravel / PHP ignores
+/vendor/
+/node_modules/
+/.env
+
+# VS / IDE ignores
+.vs/
+/*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# System files
+.DS_Store
+Thumbs.db

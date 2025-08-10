@@ -1,0 +1,45 @@
+﻿@model IEnumerable<BloodDonationManagement.Models.Donor>
+
+@{
+    ViewData["Title"] = "Donors List";
+}
+
+<h2>Donors</h2>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Add New Donor</a>
+</p>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Blood Group</th>
+            <th>District</th>
+            <th>Thana</th>
+            <th>Contact No</th>
+            <th>Last Donation</th>
+            <th>Status</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var donor in Model)
+        {
+            <tr>
+                <td>@donor.FullName</td>
+                <td>@donor.BloodGroup</td>
+                <td>@donor.District?.Name</td>
+                <td>@donor.Thana?.Name</td>
+                <td>@donor.ContactNo</td>
+                <td>@donor.LastDonationDate?.ToString("dd-MM-yyyy")</td>
+                <td>@(donor.Status ? "Active" : "Inactive")</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@donor.DonorId">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@donor.DonorId">Details</a> |
+                    <a asp-action="Delete" asp-route-id="@donor.DonorId">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

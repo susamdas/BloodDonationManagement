@@ -1,0 +1,60 @@
+﻿@model BloodDonationManagement.Models.Donor
+
+@{
+    ViewData["Title"] = "Edit Donor";
+}
+
+<h2>Edit Donor</h2>
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="DonorId" />
+
+    <!-- বাকি Create.cshtml এর মতো ফিল্ড গুলো এখানে থাকবে -->
+
+    <div class="form-group">
+        <label asp-for="FullName"></label>
+        <input asp-for="FullName" class="form-control" />
+        <span asp-validation-for="FullName" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="BloodGroup"></label>
+        <input asp-for="BloodGroup" class="form-control" />
+        <span asp-validation-for="BloodGroup" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label>District</label>
+        <select asp-for="DistrictId" asp-items="ViewBag.DistrictId" class="form-select"></select>
+    </div>
+
+    <div class="form-group">
+        <label>Thana</label>
+        <select asp-for="ThanaId" asp-items="ViewBag.ThanaId" class="form-select"></select>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="ContactNo"></label>
+        <input asp-for="ContactNo" class="form-control" />
+        <span asp-validation-for="ContactNo" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="LastDonationDate"></label>
+        <input asp-for="LastDonationDate" type="date" class="form-control" />
+        <span asp-validation-for="LastDonationDate" class="text-danger"></span>
+    </div>
+
+    <div class="form-check">
+        <input asp-for="Status" class="form-check-input" />
+        <label asp-for="Status" class="form-check-label"></label>
+    </div>
+
+    <br />
+    <button type="submit" class="btn btn-primary">Update</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
