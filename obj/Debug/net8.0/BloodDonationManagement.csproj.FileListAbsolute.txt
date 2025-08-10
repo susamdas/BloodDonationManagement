@@ -135,9 +135,7 @@ D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\
 D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\BloodDonationManagement.MvcApplicationPartsAssemblyInfo.cache
 D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\BloodDonationManagement.RazorAssemblyInfo.cache
 D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\BloodDonationManagement.RazorAssemblyInfo.cs
-D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\scopedcss\Views\Shared\_Layout.cshtml.rz.scp.css
 D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\scopedcss\bundle\BloodDonationManagement.styles.css
-D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\scopedcss\projectbundle\BloodDonationManagement.bundle.scp.css
 D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\staticwebassets.build.json
 D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\staticwebassets.development.json
 D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\staticwebassets.build.endpoints.json
@@ -154,3 +152,4 @@ D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\
 D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\BloodDonationManagement.pdb
 D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\BloodDonationManagement.genruntimeconfig.cache
 D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\ref\BloodDonationManagement.dll
+D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\BloodDonationManagement.sourcelink.json
