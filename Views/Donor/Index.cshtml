@@ -1,45 +1,488 @@
 ﻿@model IEnumerable<BloodDonationManagement.Models.Donor>
-
 @{
-    ViewData["Title"] = "Donors List";
+    ViewData["Title"] = "ডোনার তালিকা - রক্তদান ব্যবস্থাপনা";
+    Layout = "~/Views/Shared/_MainLayout.cshtml";
+    ViewBag.ShowHero = false;
 }
 
-<h2>Donors</h2>
+<style>
+    .donor-header {
+        background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(220, 38, 127, 0.2);
+    }
 
-<p>
-    <a asp-action="Create" class="btn btn-primary">Add New Donor</a>
-</p>
-
-<table class="table table-bordered table-striped">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Blood Group</th>
-            <th>District</th>
-            <th>Thana</th>
-            <th>Contact No</th>
-            <th>Last Donation</th>
-            <th>Status</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var donor in Model)
-        {
-            <tr>
-                <td>@donor.FullName</td>
-                <td>@donor.BloodGroup</td>
-                <td>@donor.District?.Name</td>
-                <td>@donor.Thana?.Name</td>
-                <td>@donor.ContactNo</td>
-                <td>@donor.LastDonationDate?.ToString("dd-MM-yyyy")</td>
-                <td>@(donor.Status ? "Active" : "Inactive")</td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@donor.DonorId">Edit</a> |
-                    <a asp-action="Details" asp-route-id="@donor.DonorId">Details</a> |
-                    <a asp-action="Delete" asp-route-id="@donor.DonorId">Delete</a>
-                </td>
-            </tr>
+        .donor-header h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
-    </tbody>
-</table>
+
+    .donor-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-box {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        border-left: 4px solid #dc2626;
+        transition: transform 0.3s ease;
+    }
+
+        .stat-box:hover {
+            transform: translateY(-5px);
+        }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #dc2626;
+        display: block;
+    }
+
+    .stat-label {
+        color: #6b7280;
+        font-weight: 500;
+        margin-top: 0.5rem;
+    }
+
+    .actions-bar {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 2rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-custom {
+        background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+        border: none;
+        color: white;
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(220, 38, 127, 0.3);
+    }
+
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(220, 38, 127, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+
+    .search-filters {
+        background: #f8fafc;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        border: 1px solid #e2e8f0;
+    }
+
+    .filter-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        align-items: end;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-control {
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        padding: 10px 15px;
+        transition: border-color 0.3s ease;
+    }
+
+        .form-control:focus {
+            border-color: #dc2626;
+            box-shadow: 0 0 0 3px rgba(220, 38, 127, 0.1);
+        }
+
+    .donors-table-container {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        border: 1px solid #e5e7eb;
+    }
+
+    .table {
+        margin-bottom: 0;
+        font-size: 0.95rem;
+    }
+
+        .table thead th {
+            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+            color: white;
+            font-weight: 600;
+            border: none;
+            padding: 1.2rem 1rem;
+            text-align: center;
+        }
+
+        .table tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+            text-align: center;
+            border-color: #f3f4f6;
+        }
+
+        .table tbody tr:hover {
+            background-color: #fef2f2;
+        }
+
+    .blood-group-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: white;
+        background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+        box-shadow: 0 2px 8px rgba(220, 38, 127, 0.3);
+    }
+
+    .status-badge {
+        padding: 6px 15px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+    }
+
+    .status-active {
+        background-color: #d1fae5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+    }
+
+    .status-inactive {
+        background-color: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fca5a5;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        padding: 6px 12px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .btn-view {
+        background-color: #3b82f6;
+        color: white;
+    }
+
+        .btn-view:hover {
+            background-color: #2563eb;
+            color: white;
+            text-decoration: none;
+        }
+
+    .btn-edit {
+        background-color: #f59e0b;
+        color: white;
+    }
+
+        .btn-edit:hover {
+            background-color: #d97706;
+            color: white;
+            text-decoration: none;
+        }
+
+    .btn-delete {
+        background-color: #ef4444;
+        color: white;
+    }
+
+        .btn-delete:hover {
+            background-color: #dc2626;
+            color: white;
+            text-decoration: none;
+        }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #6b7280;
+    }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: #d1d5db;
+        }
+
+    .pagination-container {
+        margin-top: 2rem;
+        display: flex;
+        justify-content: center;
+    }
+
+    @@media (max-width: 768px) {
+        .donor-header h2
+
+    {
+        font-size: 2rem;
+    }
+
+    .actions-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-row {
+        grid-template-columns: 1fr;
+    }
+
+    .donors-table-container {
+        overflow-x: auto;
+    }
+
+    .table {
+        min-width: 800px;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    }
+</style>
+
+<div class="container">
+    <!-- Header Section -->
+    <div class="donor-header">
+        <h2>
+            <i class="fas fa-users"></i>
+            ডোনার ম্যানেজমেন্ট
+        </h2>
+        <p class="mb-0">সকল রক্তদাতাদের তথ্য দেখুন এবং ম্যানেজ করুন</p>
+    </div>
+
+    <!-- Statistics -->
+    <div class="donor-stats">
+        <div class="stat-box">
+            <span class="stat-number">@Model.Count()</span>
+            <div class="stat-label">মোট ডোনার</div>
+        </div>
+        <div class="stat-box">
+            <span class="stat-number">@Model.Count(d => d.Status)</span>
+            <div class="stat-label">সক্রিয় ডোনার</div>
+        </div>
+        <div class="stat-box">
+            <span class="stat-number">@Model.Count(d => !d.Status)</span>
+            <div class="stat-label">নিষ্ক্রিয় ডোনার</div>
+        </div>
+        <div class="stat-box">
+            <span class="stat-number">@Model.Where(d => d.LastDonationDate.HasValue && d.LastDonationDate.Value >= DateTime.Now.AddDays(-90)).Count()</span>
+            <div class="stat-label">সাম্প্রতিক ডোনার</div>
+        </div>
+    </div>
+
+    <!-- Actions Bar -->
+    <div class="actions-bar">
+        <div>
+            <a asp-action="Create" class="btn-custom">
+                <i class="fas fa-plus"></i>
+                নতুন ডোনার যোগ করুন
+            </a>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="#" class="btn btn-outline-secondary">
+                <i class="fas fa-download"></i>
+                এক্সপোর্ট
+            </a>
+            <a href="#" class="btn btn-outline-secondary">
+                <i class="fas fa-print"></i>
+                প্রিন্ট
+            </a>
+        </div>
+    </div>
+
+    <!-- Search Filters -->
+    <div class="search-filters">
+        <div class="filter-row">
+            <div class="form-group">
+                <label>রক্তের গ্রুপ</label>
+                <select class="form-control">
+                    <option value="">সকল গ্রুপ</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>জেলা</label>
+                <select class="form-control">
+                    <option value="">সকল জেলা</option>
+                    @foreach (var district in Model.Where(d => d.District != null).Select(d => d.District.Name).Distinct().OrderBy(d => d))
+                    {
+                        <option value="@district">@district</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group">
+                <label>স্ট্যাটাস</label>
+                <select class="form-control">
+                    <option value="">সকল স্ট্যাটাস</option>
+                    <option value="true">সক্রিয়</option>
+                    <option value="false">নিষ্ক্রিয়</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>&nbsp;</label>
+                <button class="btn btn-primary form-control">
+                    <i class="fas fa-search"></i>
+                    অনুসন্ধান
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Donors Table -->
+    <div class="donors-table-container">
+        @if (Model.Any())
+        {
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-user"></i> নাম</th>
+                        <th><i class="fas fa-tint"></i> রক্তের গ্রুপ</th>
+                        <th><i class="fas fa-map-marker-alt"></i> জেলা</th>
+                        <th><i class="fas fa-map-pin"></i> থানা</th>
+                        <th><i class="fas fa-phone"></i> যোগাযোগ</th>
+                        <th><i class="fas fa-calendar"></i> শেষ দান</th>
+                        <th><i class="fas fa-toggle-on"></i> স্ট্যাটাস</th>
+                        <th><i class="fas fa-cogs"></i> কার্যক্রম</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var donor in Model)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@donor.FullName</strong>
+                            </td>
+                            <td>
+                                <span class="blood-group-badge">@donor.BloodGroup</span>
+                            </td>
+                            <td>@(donor.District?.Name ?? "N/A")</td>
+                            <td>@(donor.Thana?.Name ?? "N/A")</td>
+                            <td>
+                                <a href="tel:@donor.ContactNo" class="text-decoration-none">
+                                    <i class="fas fa-phone"></i> @donor.ContactNo
+                                </a>
+                            </td>
+                            <td>
+                                @if (donor.LastDonationDate.HasValue)
+                                {
+                                    <span class="@(donor.LastDonationDate.Value >= DateTime.Now.AddDays(-90) ? "text-success" : "text-muted")">
+                                        @donor.LastDonationDate.Value.ToString("dd-MM-yyyy")
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">কোনো তথ্য নেই</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="status-badge @(donor.Status ? "status-active" : "status-inactive")">
+                                    @(donor.Status ? "সক্রিয়" : "নিষ্ক্রিয়")
+                                </span>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a asp-action="Details" asp-route-id="@donor.DonorId" class="action-btn btn-view" title="বিস্তারিত দেখুন">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@donor.DonorId" class="action-btn btn-edit" title="সম্পাদনা করুন">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@donor.DonorId" class="action-btn btn-delete" title="মুছে ফেলুন" onclick="return confirm('আপনি কি নিশ্চিত এই ডোনারকে মুছে ফেলতে চান?')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="fas fa-users-slash"></i>
+                <h4>কোনো ডোনার পাওয়া যায়নি</h4>
+                <p>এখনো কোনো ডোনার রেজিস্ট্রেশন করা হয়নি।</p>
+                <a asp-action="Create" class="btn-custom mt-3">
+                    <i class="fas fa-plus"></i>
+                    প্রথম ডোনার যোগ করুন
+                </a>
+            </div>
+        }
+    </div>
+
+    <!-- Pagination (if needed) -->
+    <div class="pagination-container">
+        <!-- Add pagination controls here if implementing pagination -->
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Add any JavaScript for filtering, searching, etc.
+        document.addEventListener('DOMContentLoaded', function() {
+            // Simple client-side filtering (you can replace with server-side)
+            const filters = document.querySelectorAll('.search-filters select');
+            const searchBtn = document.querySelector('.search-filters button');
+
+            // Add event listeners for real-time filtering if needed
+            console.log('Donor management page loaded successfully');
+        });
+    </script>
+}
