@@ -1,57 +1,376 @@
 ﻿@model BloodDonationManagement.Models.Donor
-
 @{
-    ViewData["Title"] = "Add Donor";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Add New Donor";
+    Layout = "~/Views/Shared/_MainLayout.cshtml";
 }
 
-<h2>Add New Donor</h2>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <!-- Page Header -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-plus me-2"></i>
+                        Add New Blood Donor
+                    </h4>
+                    <small class="text-light">Register a new donor to save lives</small>
+                </div>
 
-<form asp-action="Create" method="post">
-    <div class="form-group">
-        <label asp-for="FullName"></label>
-        <input asp-for="FullName" class="form-control" />
-        <span asp-validation-for="FullName" class="text-danger"></span>
+                <div class="card-body">
+                    <!-- Alert for form instructions -->
+                    <div class="alert alert-info alert-dismissible fade show" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Important:</strong> Please fill all required fields accurately. This information will help connect donors with patients in emergency situations.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+
+                    <!-- Main Form -->
+                    <form asp-action="Create" method="post" id="donorForm" novalidate>
+
+                        <!-- Personal Information Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-secondary border-bottom pb-2 mb-3">
+                                    <i class="fas fa-user me-2"></i>Personal Information
+                                </h5>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Full Name -->
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FullName" class="form-label fw-bold">
+                                    <i class="fas fa-user me-1"></i>Full Name *
+                                </label>
+                                <input asp-for="FullName" class="form-control form-control-lg" placeholder="Enter full name" />
+                                <span asp-validation-for="FullName" class="text-danger"></span>
+                            </div>
+
+                            <!-- Blood Group -->
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="BloodGroup" class="form-label fw-bold">
+                                    <i class="fas fa-tint me-1 text-danger"></i>Blood Group *
+                                </label>
+                                <div class="input-group">
+                                    <input asp-for="BloodGroup" class="form-control form-control-lg text-center fw-bold"
+                                           placeholder="e.g., A+, B-, O+" style="color: #dc3545;" />
+                                    <span class="input-group-text bg-danger text-white">
+                                        <i class="fas fa-heartbeat"></i>
+                                    </span>
+                                </div>
+                                <span asp-validation-for="BloodGroup" class="text-danger"></span>
+                                <div class="form-text">
+                                    <small>Valid: A+, A-, B+, B-, AB+, AB-, O+, O-</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information Section -->
+                        <div class="row mb-4 mt-4">
+                            <div class="col-12">
+                                <h5 class="text-secondary border-bottom pb-2 mb-3">
+                                    <i class="fas fa-phone me-2"></i>Contact Information
+                                </h5>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Contact Number -->
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ContactNo" class="form-label fw-bold">
+                                    <i class="fas fa-mobile-alt me-1"></i>Mobile Number *
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">🇧🇩 +88</span>
+                                    <input asp-for="ContactNo" class="form-control form-control-lg"
+                                           placeholder="01XXXXXXXXX" maxlength="11" />
+                                </div>
+                                <span asp-validation-for="ContactNo" class="text-danger"></span>
+                            </div>
+
+                            <!-- Last Donation Date -->
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="LastDonationDate" class="form-label fw-bold">
+                                    <i class="fas fa-calendar-alt me-1"></i>Last Donation Date
+                                </label>
+                                <input asp-for="LastDonationDate" type="date" class="form-control form-control-lg" />
+                                <span asp-validation-for="LastDonationDate" class="text-danger"></span>
+                                <div class="form-text">
+                                    <small class="text-muted">Leave empty if first-time donor</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Location Information Section -->
+                        <div class="row mb-4 mt-4">
+                            <div class="col-12">
+                                <h5 class="text-secondary border-bottom pb-2 mb-3">
+                                    <i class="fas fa-map-marker-alt me-2"></i>Location Information
+                                </h5>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- District -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-map me-1"></i>District *
+                                </label>
+                                <select asp-for="DistrictId" asp-items="ViewBag.DistrictId" class="form-select form-select-lg">
+                                    <option value="">-- Select District --</option>
+                                </select>
+                                <span asp-validation-for="DistrictId" class="text-danger"></span>
+                            </div>
+
+                            <!-- Thana -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-building me-1"></i>Thana/Upazila *
+                                </label>
+                                <select asp-for="ThanaId" asp-items="ViewBag.ThanaId" class="form-select form-select-lg" disabled>
+                                    <option value="">-- Select Thana --</option>
+                                </select>
+                                <span asp-validation-for="ThanaId" class="text-danger"></span>
+                                <div class="form-text">
+                                    <small class="text-muted">Select district first</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status Section -->
+                        <div class="row mb-4 mt-4">
+                            <div class="col-12">
+                                <h5 class="text-secondary border-bottom pb-2 mb-3">
+                                    <i class="fas fa-toggle-on me-2"></i>Donor Status
+                                </h5>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <div class="form-check form-switch">
+                                    <input asp-for="Status" class="form-check-input" role="switch" id="statusSwitch" checked />
+                                    <label asp-for="Status" class="form-check-label fw-bold" for="statusSwitch">
+                                        <span id="statusText" class="text-success">
+                                            <i class="fas fa-check-circle me-1"></i>Active Donor
+                                        </span>
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    <small class="text-muted">Active donors can be contacted for blood requests</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="row mt-5">
+                            <div class="col-12">
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                                    <button type="submit" class="btn btn-success btn-lg px-5 me-md-2" id="submitBtn">
+                                        <i class="fas fa-save me-2"></i>Save Donor
+                                    </button>
+                                    <a asp-action="Index" class="btn btn-secondary btn-lg px-5">
+                                        <i class="fas fa-times me-2"></i>Cancel
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Helper Text -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>Note:</strong> Donors must wait at least 90 days between blood donations for safety reasons.
+                                </div>
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <div class="form-group">
-        <label asp-for="BloodGroup"></label>
-        <input asp-for="BloodGroup" class="form-control" />
-        <span asp-validation-for="BloodGroup" class="text-danger"></span>
-    </div>
-
-    <div class="form-group">
-        <label>District</label>
-        <select asp-for="DistrictId" asp-items="ViewBag.DistrictId" class="form-select"></select>
-    </div>
-
-    <div class="form-group">
-        <label>Thana</label>
-        <select asp-for="ThanaId" asp-items="ViewBag.ThanaId" class="form-select"></select>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="ContactNo"></label>
-        <input asp-for="ContactNo" class="form-control" />
-        <span asp-validation-for="ContactNo" class="text-danger"></span>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="LastDonationDate"></label>
-        <input asp-for="LastDonationDate" type="date" class="form-control" />
-        <span asp-validation-for="LastDonationDate" class="text-danger"></span>
-    </div>
-
-    <div class="form-check">
-        <input asp-for="Status" class="form-check-input" />
-        <label asp-for="Status" class="form-check-label"></label>
-    </div>
-
-    <br />
-    <button type="submit" class="btn btn-success">Save</button>
-    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
-</form>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(document).ready(function() {
+            // Status Toggle Enhancement
+            $('#statusSwitch').change(function() {
+                var statusText = $('#statusText');
+                if ($(this).is(':checked')) {
+                    statusText.html('<i class="fas fa-check-circle me-1"></i>Active Donor')
+                             .removeClass('text-danger').addClass('text-success');
+                } else {
+                    statusText.html('<i class="fas fa-times-circle me-1"></i>Inactive Donor')
+                             .removeClass('text-success').addClass('text-danger');
+                }
+            });
+
+            // District Selection Enhancement
+            $('#DistrictId').change(function() {
+                var thanaSelect = $('#ThanaId');
+                var selectedText = $(this).find('option:selected').text();
+
+                if ($(this).val()) {
+                    thanaSelect.prop('disabled', false);
+                    $('.form-text small').text('Loading thanas for ' + selectedText + '...');
+                } else {
+                    thanaSelect.prop('disabled', true);
+                    $('.form-text small').text('Select district first');
+                }
+            });
+
+            // Form Validation Enhancement
+            $('#donorForm').on('submit', function(e) {
+                var form = $(this);
+
+                if (!form[0].checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    // Scroll to first error
+                    var firstError = form.find('.is-invalid').first();
+                    if (firstError.length) {
+                        $('html, body').animate({
+                            scrollTop: firstError.offset().top - 100
+                        }, 500);
+                    }
+                }
+
+                form.addClass('was-validated');
+            });
+
+            // Real-time character counter for phone
+            $('#ContactNo').on('input', function() {
+                var length = $(this).val().length;
+                var maxLength = 11;
+                var remaining = maxLength - length;
+
+                var helpText = $(this).next().next('.form-text');
+                if (length > 0) {
+                    helpText.html('<small class="text-muted">' + length + '/' + maxLength + ' digits</small>');
+                }
+            });
+
+            // Blood group input enhancement
+            $('#BloodGroup').on('input', function() {
+                var value = $(this).val().toUpperCase();
+                $(this).val(value);
+
+                var validGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+                if (validGroups.includes(value)) {
+                    $(this).removeClass('is-invalid').addClass('is-valid');
+                }
+            });
+
+            // Auto-dismiss alert after 10 seconds
+            setTimeout(function() {
+                $('.alert-info').fadeOut('slow');
+            }, 10000);
+        });
+    </script>
+
+    <style>
+        /* Custom styles for the form */
+        .card {
+            border: none;
+            border-radius: 15px;
+        }
+
+        .card-header {
+            border-radius: 15px 15px 0 0 !important;
+            background: linear-gradient(135deg, #dc3545, #c82333);
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+
+        .form-control-lg {
+            border-radius: 10px;
+        }
+
+        .form-select-lg {
+            border-radius: 10px;
+        }
+
+        .btn-lg {
+            border-radius: 10px;
+            padding: 12px 30px;
+        }
+
+        .form-check-input:checked {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+
+        .form-switch .form-check-input {
+            width: 3em;
+            height: 1.5em;
+        }
+
+        /* Blood group input special styling */
+        input[name="BloodGroup"] {
+            text-transform: uppercase;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        /* Animation for form sections */
+        .form-group, .row {
+            animation: fadeInUp 0.5s ease-in-out;
+        }
+
+        @@keyframes fadeInUp {
+            from
+
+        {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        }
+
+        /* Responsive adjustments */
+        @@media (max-width: 768px) {
+            .col-md-8.offset-md-2
+
+        {
+            margin: 0;
+            padding: 0 15px;
+        }
+
+        .card-header h4 {
+            font-size: 1.3rem;
+        }
+
+        .btn-lg {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        }
+
+        /* Loading state */
+        .btn:disabled {
+            opacity: 0.7;
+        }
+
+        /* Success state for valid inputs */
+        .form-control.is-valid {
+            border-color: #28a745;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='m2.3 6.73.4-.4 1.4-1.4L6.7 2.3l.4.4L3.7 6.13z'/%3e%3c/svg%3e");
+        }
+    </style>
 }
