@@ -1,145 +1,248 @@
 ﻿@{
     ViewData["Title"] = "হোম - রক্তদান ব্যবস্থাপনা";
     Layout = "~/Views/Shared/_MainLayout.cshtml";
-    ViewBag.ShowHero = false; // Disable default hero section from layout
+    ViewBag.ShowHero = false;
 }
 
 <style>
-    .custom-hero-section {
-        text-align: center;
-        margin: 2rem 0;
-        padding: 4rem 2rem;
-        background: linear-gradient(135deg, rgba(220, 38, 127, 0.9) 0%, rgba(239, 68, 68, 0.9) 100%);
-        border-radius: 25px;
-        color: white;
+    :root {
+        --primary-red: #dc2626;
+        --primary-red-dark: #991b1b;
+        --primary-red-light: #fecaca;
+        --accent-blue: #1e40af;
+        --accent-green: #059669;
+        --gradient-primary: linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f87171 100%);
+        --gradient-secondary: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+        --shadow-soft: 0 4px 20px rgba(0,0,0,0.08);
+        --shadow-medium: 0 8px 30px rgba(0,0,0,0.12);
+        --shadow-strong: 0 20px 40px rgba(220, 38, 127, 0.15);
+        --border-radius: 20px;
+        --border-radius-large: 30px;
+    }
+
+    .modern-hero {
+        background: linear-gradient(135deg, rgba(220, 38, 127, 0.95) 0%, rgba(239, 68, 68, 0.9) 50%, rgba(248, 113, 113, 0.85) 100%), url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)" /></svg>');
+        border-radius: var(--border-radius-large);
+        padding: 5rem 2rem;
+        margin: 2rem 0 4rem 0;
         position: relative;
         overflow: hidden;
-        box-shadow: 0 20px 40px rgba(220, 38, 127, 0.2);
+        box-shadow: var(--shadow-strong);
     }
 
-        .custom-hero-section::before {
+        .modern-hero::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-            animation: shimmer 4s infinite;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: rotate 20s linear infinite;
+            z-index: 1;
         }
 
-    @@keyframes shimmer {
-        0%
+        .modern-hero::after {
+            content: '';
+            position: absolute;
+            top: 20%;
+            right: 10%;
+            width: 100px;
+            height: 100px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+            z-index: 1;
+        }
+
+    @@keyframes rotate {
+        from
 
     {
-        left: -100%;
+        transform: rotate(0deg);
     }
 
-    100% {
-        left: 100%;
+    to {
+        transform: rotate(360deg);
     }
 
-    }
-
-    .blood-drop {
-        font-size: 6rem;
-        margin-bottom: 1.5rem;
-        animation: float 3s ease-in-out infinite;
-        filter: drop-shadow(0 10px 20px rgba(239, 68, 68, 0.3));
     }
 
     @@keyframes float {
         0%, 100%
 
     {
-        transform: translateY(0px);
+        transform: translateY(0px) scale(1);
     }
 
     50% {
-        transform: translateY(-15px);
+        transform: translateY(-20px) scale(1.1);
     }
 
     }
 
-    .custom-hero-section h1 {
-        font-size: 4rem;
-        font-weight: 800;
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+    }
+
+    .hero-icon {
+        font-size: 7rem;
+        margin-bottom: 2rem;
+        animation: heartbeat 2s ease-in-out infinite;
+        filter: drop-shadow(0 10px 30px rgba(239, 68, 68, 0.4));
+    }
+
+    @@keyframes heartbeat {
+        0%, 100%
+
+    {
+        transform: scale(1);
+    }
+
+    25% {
+        transform: scale(1.05);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    75% {
+        transform: scale(1.05);
+    }
+
+    }
+
+    .hero-title {
+        font-size: clamp(2.5rem, 5vw, 4.5rem);
+        font-weight: 900;
         margin-bottom: 1.5rem;
-        text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
-        background: linear-gradient(45deg, #fff, #fecaca);
+        background: linear-gradient(45deg, #ffffff, #fecaca, #ffffff);
+        background-size: 200% 200%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: gradientShift 3s ease-in-out infinite;
+        text-shadow: 0 0 30px rgba(255,255,255,0.5);
+    }
+
+    @@keyframes gradientShift {
+        0%, 100%
+
+    {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    }
+
+    .hero-subtitle {
+        font-size: 1.3rem;
+        opacity: 0.95;
+        margin-bottom: 3rem;
+        font-weight: 400;
+        line-height: 1.6;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        margin: 4rem 0;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 2.5rem;
+        border-radius: var(--border-radius);
+        text-align: center;
+        box-shadow: var(--shadow-soft);
+        border: 1px solid rgba(220, 38, 127, 0.1);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: var(--gradient-primary);
+            transition: all 0.4s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-12px) scale(1.02);
+            box-shadow: var(--shadow-strong);
+        }
+
+            .stat-card:hover::before {
+                left: 0;
+            }
+
+    .stat-icon {
+        font-size: 3rem;
+        margin-bottom: 1.5rem;
+        display: block;
+    }
+
+    .stat-number {
+        font-size: 2.8rem;
+        font-weight: 800;
+        color: var(--primary-red);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .stat-label {
+        font-size: 1.1rem;
+        color: #6b7280;
+        font-weight: 600;
+    }
+
+    .features-section {
+        margin: 5rem 0;
+    }
+
+    .section-title {
+        text-align: center;
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 3rem;
+        background: var(--gradient-primary);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
     }
 
-    .hero-subtitle {
-        font-size: 1.4rem;
-        opacity: 0.95;
-        margin-bottom: 2.5rem;
-        font-weight: 400;
-        letter-spacing: 0.5px;
-    }
-
-    .stats-overview {
+    .features-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1.5rem;
-        margin: 2rem 0 3rem 0;
-    }
-
-    .stat-card {
-        background: white;
-        padding: 2rem 1.5rem;
-        border-radius: 20px;
-        text-align: center;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
-        border: 1px solid rgba(220, 38, 127, 0.1);
-    }
-
-        .stat-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-        }
-
-    .stat-icon {
-        font-size: 2.5rem;
-        margin-bottom: 1rem;
-    }
-
-    .stat-number {
-        font-size: 2.2rem;
-        font-weight: 800;
-        color: #dc2626;
-        display: block;
-        margin-bottom: 0.5rem;
-    }
-
-    .stat-label {
-        font-size: 1rem;
-        color: #6b7280;
-        font-weight: 500;
-    }
-
-    .main-features {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
         gap: 2.5rem;
-        margin: 4rem 0;
     }
 
     .feature-card {
         background: white;
-        border-radius: 20px;
-        padding: 2.5rem;
-        text-align: center;
+        border-radius: var(--border-radius);
+        padding: 3rem 2.5rem;
         text-decoration: none;
         color: inherit;
-        transition: all 0.4s ease;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         position: relative;
         overflow: hidden;
+        box-shadow: var(--shadow-soft);
         border: 2px solid transparent;
+        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     }
 
         .feature-card::before {
@@ -148,27 +251,38 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, #dc2626, #ef4444, #f87171);
-            transition: height 0.3s ease;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(220, 38, 127, 0.02) 0%, rgba(239, 68, 68, 0.02) 100%);
+            transform: translateX(-100%);
+            transition: transform 0.4s ease;
         }
 
         .feature-card:hover {
-            transform: translateY(-12px);
-            box-shadow: 0 25px 50px rgba(220, 38, 127, 0.15);
+            transform: translateY(-15px);
+            box-shadow: var(--shadow-strong);
+            border-color: rgba(220, 38, 127, 0.2);
             text-decoration: none;
             color: inherit;
-            border-color: rgba(220, 38, 127, 0.2);
         }
 
             .feature-card:hover::before {
-                height: 6px;
+                transform: translateX(0);
             }
 
+    .feature-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
     .feature-icon {
-        font-size: 4rem;
+        font-size: 4.5rem;
         margin-bottom: 1.5rem;
         display: block;
+        transition: transform 0.3s ease;
+    }
+
+    .feature-card:hover .feature-icon {
+        transform: scale(1.1) rotate(5deg);
     }
 
     .donors-card .feature-icon {
@@ -176,7 +290,7 @@
     }
 
     .requests-card .feature-icon {
-        color: #2563eb;
+        color: #1e40af;
     }
 
     .districts-card .feature-icon {
@@ -184,7 +298,7 @@
     }
 
     .feature-title {
-        font-size: 1.6rem;
+        font-size: 1.8rem;
         font-weight: 700;
         margin-bottom: 1rem;
         color: #1f2937;
@@ -193,195 +307,244 @@
     .feature-description {
         color: #6b7280;
         line-height: 1.7;
-        margin-bottom: 2rem;
-        font-size: 1.05rem;
+        font-size: 1.1rem;
+        margin-bottom: 2.5rem;
     }
 
     .feature-stats {
-        display: flex;
-        justify-content: space-around;
-        padding-top: 1.5rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        padding-top: 2rem;
         border-top: 2px solid #f3f4f6;
     }
 
     .feature-stat {
         text-align: center;
+        padding: 1rem;
+        background: #f9fafb;
+        border-radius: 12px;
+        transition: all 0.3s ease;
     }
 
+        .feature-stat:hover {
+            background: #f3f4f6;
+            transform: scale(1.05);
+        }
+
     .feature-stat-number {
-        font-size: 1.8rem;
-        font-weight: bold;
-        color: #dc2626;
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--primary-red);
         display: block;
+        margin-bottom: 0.5rem;
     }
 
     .feature-stat-label {
-        font-size: 0.9rem;
-        color: #9ca3af;
-        margin-top: 0.3rem;
-        font-weight: 500;
+        font-size: 0.95rem;
+        color: #6b7280;
+        font-weight: 600;
     }
 
     .quick-actions {
-        background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
-        border-radius: 25px;
-        padding: 3rem 2rem;
-        margin-top: 4rem;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        background: var(--gradient-secondary);
+        border-radius: var(--border-radius-large);
+        padding: 4rem 2rem;
+        margin: 5rem 0;
         position: relative;
         overflow: hidden;
+        box-shadow: var(--shadow-medium);
     }
 
         .quick-actions::before {
             content: '';
             position: absolute;
-            top: -50%;
-            right: -50%;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle, rgba(220,38,127,0.1) 0%, transparent 70%);
-            animation: pulse 4s ease-in-out infinite;
+            background: radial-gradient(circle at 30% 70%, rgba(220,38,127,0.15) 0%, transparent 50%), radial-gradient(circle at 70% 30%, rgba(59,130,246,0.1) 0%, transparent 50%);
+            z-index: 1;
         }
 
-    @@keyframes pulse {
-        0%, 100%
-
-    {
-        transform: scale(1);
-        opacity: 0.5;
-    }
-
-    50% {
-        transform: scale(1.1);
-        opacity: 0.8;
-    }
-
+    .quick-actions-content {
+        position: relative;
+        z-index: 2;
     }
 
     .quick-actions h3 {
         text-align: center;
-        margin-bottom: 2.5rem;
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin-bottom: 3rem;
         color: white;
-        font-size: 2rem;
-        font-weight: 700;
-        position: relative;
-        z-index: 1;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
 
-    .action-buttons {
+    .action-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 1.5rem;
-        position: relative;
-        z-index: 1;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
     }
 
     .action-btn {
-        background: linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f87171 100%);
+        background: var(--gradient-primary);
         color: white;
-        padding: 1.5rem 1rem;
-        border-radius: 15px;
+        padding: 2rem 1.5rem;
+        border-radius: 18px;
         text-decoration: none;
-        transition: all 0.3s ease;
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: center;
-        gap: 0.8rem;
+        gap: 1rem;
         font-weight: 600;
-        font-size: 1.05rem;
-        box-shadow: 0 8px 20px rgba(220, 38, 127, 0.3);
+        font-size: 1.1rem;
+        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        box-shadow: 0 10px 25px rgba(220, 38, 127, 0.3);
+        position: relative;
+        overflow: hidden;
     }
 
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.4s ease;
+        }
+
         .action-btn:hover {
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: 0 15px 30px rgba(220, 38, 127, 0.4);
+            transform: translateY(-8px) scale(1.03);
+            box-shadow: 0 20px 40px rgba(220, 38, 127, 0.4);
             color: white;
             text-decoration: none;
-            background: linear-gradient(135deg, #b91c1c 0%, #dc2626 50%, #ef4444 100%);
         }
+
+            .action-btn:hover::before {
+                width: 300px;
+                height: 300px;
+            }
 
         .action-btn i {
-            font-size: 1.2rem;
+            font-size: 2rem;
+            z-index: 1;
+            position: relative;
         }
 
-    /* Mobile Responsiveness */
+        .action-btn span {
+            z-index: 1;
+            position: relative;
+        }
+
+    /* Responsive Design */
     @@media (max-width: 768px) {
-        .custom-hero-section
+        .modern-hero
 
     {
         padding: 3rem 1.5rem;
         margin: 1rem;
     }
 
-    .custom-hero-section h1 {
-        font-size: 2.8rem;
+    .hero-icon {
+        font-size: 5rem;
     }
 
     .hero-subtitle {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
     }
 
-    .blood-drop {
-        font-size: 4.5rem;
-    }
-
-    .main-features {
-        grid-template-columns: 1fr;
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
         margin: 2rem 0;
+    }
+
+    .features-grid {
+        grid-template-columns: 1fr;
     }
 
     .feature-card {
         padding: 2rem 1.5rem;
     }
 
-    .stats-overview {
+    .action-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
-    }
-
-    .action-buttons {
-        grid-template-columns: 1fr;
+        gap: 1.5rem;
     }
 
     .quick-actions {
-        margin: 2rem 1rem;
-        padding: 2rem 1.5rem;
+        padding: 3rem 1.5rem;
+        margin: 3rem 1rem;
     }
 
     }
 
     @@media (max-width: 480px) {
-        .custom-hero-section h1
+        .stats-grid
 
     {
-        font-size: 2.2rem;
+        grid-template-columns: 1fr;
     }
 
-    .stats-overview {
+    .action-grid {
         grid-template-columns: 1fr;
     }
 
     .stat-card {
-        padding: 1.5rem 1rem;
+        padding: 2rem 1.5rem;
+    }
+
+    .feature-stats {
+        grid-template-columns: 1fr;
+    }
+
+    }
+
+    /* Loading animation for stats */
+    .stat-number {
+        animation: countUp 2s ease-out;
+    }
+
+    @@keyframes countUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 
     }
 </style>
 
 <div class="container">
-    <!-- Custom Hero Section -->
-    <div class="custom-hero-section">
-        <div class="blood-drop">🩸</div>
-        <h1>স্বাগতম</h1>
-        <p class="hero-subtitle">রক্ত দান ব্যবস্থাপনা সিস্টেমে - প্রতিটি ড্রপ রক্ত, একটি জীবন বাঁচায়</p>
+    <!-- Modern Hero Section -->
+    <div class="modern-hero">
+        <div class="hero-content">
+            <div class="hero-icon">🩸</div>
+            <h1 class="hero-title">স্বাগতম</h1>
+            <p class="hero-subtitle">
+                আধুনিক রক্তদান ব্যবস্থাপনা সিস্টেমে - যেখানে প্রতিটি রক্তের ড্রপ একটি মূল্যবান জীবন রক্ষা করে
+            </p>
+        </div>
     </div>
 
-    <!-- Statistics Overview -->
-    <div class="stats-overview">
+    <!-- Statistics Grid -->
+    <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-icon">👥</div>
             <span class="stat-number">247</span>
-            <span class="stat-label">মোট ডোনার</span>
+            <span class="stat-label">মোট রক্তদাতা</span>
         </div>
         <div class="stat-card">
             <div class="stat-icon">🩸</div>
@@ -391,86 +554,103 @@
         <div class="stat-card">
             <div class="stat-icon">✅</div>
             <span class="stat-number">156</span>
-            <span class="stat-label">সফল দান</span>
+            <span class="stat-label">সফল রক্তদান</span>
         </div>
         <div class="stat-card">
             <div class="stat-icon">🏢</div>
             <span class="stat-number">64</span>
-            <span class="stat-label">জেলা</span>
+            <span class="stat-label">সক্রিয় জেলা</span>
         </div>
     </div>
 
-    <!-- Main Features -->
-    <div class="main-features">
-        <a href="@Url.Action("Index", "Donor")" class="feature-card donors-card">
-            <span class="feature-icon">👥</span>
-            <h3 class="feature-title">ডোনার ম্যানেজমেন্ট</h3>
-            <p class="feature-description">নতুন ডোনার রেজিস্ট্রেশন, প্রোফাইল আপডেট এবং সমস্ত ডোনারদের তথ্য সুন্দরভাবে ম্যানেজ করুন</p>
-            <div class="feature-stats">
-                <div class="feature-stat">
-                    <span class="feature-stat-number">247</span>
-                    <span class="feature-stat-label">মোট ডোনার</span>
+    <!-- Features Section -->
+    <div class="features-section">
+        <h2 class="section-title">প্রধান ফিচারসমূহ</h2>
+        <div class="features-grid">
+            <a href="@Url.Action("Index", "Donor")" class="feature-card donors-card">
+                <div class="feature-header">
+                    <span class="feature-icon">👥</span>
+                    <h3 class="feature-title">রক্তদাতা ব্যবস্থাপনা</h3>
                 </div>
-                <div class="feature-stat">
-                    <span class="feature-stat-number">89</span>
-                    <span class="feature-stat-label">সক্রিয় ডোনার</span>
+                <p class="feature-description">
+                    নতুন রক্তদাতা নিবন্ধন, প্রোফাইল আপডেট এবং সমস্ত রক্তদাতাদের তথ্য আধুনিক এবং কার্যকরভাবে পরিচালনা করুন
+                </p>
+                <div class="feature-stats">
+                    <div class="feature-stat">
+                        <span class="feature-stat-number">247</span>
+                        <span class="feature-stat-label">মোট রক্তদাতা</span>
+                    </div>
+                    <div class="feature-stat">
+                        <span class="feature-stat-number">89</span>
+                        <span class="feature-stat-label">সক্রিয় রক্তদাতা</span>
+                    </div>
                 </div>
-            </div>
-        </a>
+            </a>
 
-        <a href="@Url.Action("Index", "Request")" class="feature-card requests-card">
-            <span class="feature-icon">🩸</span>
-            <h3 class="feature-title">রক্তের অনুরোধ</h3>
-            <p class="feature-description">জরুরি রক্তের অনুরোধ দ্রুত দেখুন, প্রসেস করুন এবং কার্যকরভাবে ম্যানেজ করুন</p>
-            <div class="feature-stats">
-                <div class="feature-stat">
-                    <span class="feature-stat-number">12</span>
-                    <span class="feature-stat-label">মুলতুবি</span>
+            <a href="@Url.Action("Index", "Request")" class="feature-card requests-card">
+                <div class="feature-header">
+                    <span class="feature-icon">🩸</span>
+                    <h3 class="feature-title">রক্তের অনুরোধ</h3>
                 </div>
-                <div class="feature-stat">
-                    <span class="feature-stat-number">156</span>
-                    <span class="feature-stat-label">সম্পূর্ণ</span>
+                <p class="feature-description">
+                    জরুরি রক্তের অনুরোধগুলি দ্রুত প্রক্রিয়াকরণ, ট্র্যাকিং এবং কার্যকর সমাধানের জন্য স্মার্ট ম্যানেজমেন্ট
+                </p>
+                <div class="feature-stats">
+                    <div class="feature-stat">
+                        <span class="feature-stat-number">12</span>
+                        <span class="feature-stat-label">মুলতুবি অনুরোধ</span>
+                    </div>
+                    <div class="feature-stat">
+                        <span class="feature-stat-number">156</span>
+                        <span class="feature-stat-label">সম্পূর্ণ অনুরোধ</span>
+                    </div>
                 </div>
-            </div>
-        </a>
+            </a>
 
-        <a href="@Url.Action("Index", "Admin")" class="feature-card districts-card">
-            <span class="feature-icon">🏢</span>
-            <h3 class="feature-title">জেলা ও থানা</h3>
-            <p class="feature-description">বাংলাদেশের সকল জেলা এবং থানার তথ্য সুষ্ঠুভাবে ম্যানেজ এবং আপডেট করুন</p>
-            <div class="feature-stats">
-                <div class="feature-stat">
-                    <span class="feature-stat-number">64</span>
-                    <span class="feature-stat-label">জেলা</span>
+            <a href="@Url.Action("Index", "Admin")" class="feature-card districts-card">
+                <div class="feature-header">
+                    <span class="feature-icon">🏢</span>
+                    <h3 class="feature-title">অঞ্চল ব্যবস্থাপনা</h3>
                 </div>
-                <div class="feature-stat">
-                    <span class="feature-stat-number">495</span>
-                    <span class="feature-stat-label">থানা</span>
+                <p class="feature-description">
+                    বাংলাদেশের সকল জেলা ও থানার তথ্য সুসংগঠিতভাবে পরিচালনা এবং নিয়মিত আপডেট করার সুবিধা
+                </p>
+                <div class="feature-stats">
+                    <div class="feature-stat">
+                        <span class="feature-stat-number">64</span>
+                        <span class="feature-stat-label">জেলা</span>
+                    </div>
+                    <div class="feature-stat">
+                        <span class="feature-stat-number">495</span>
+                        <span class="feature-stat-label">থানা</span>
+                    </div>
                 </div>
-            </div>
-        </a>
+            </a>
+        </div>
     </div>
 
     <!-- Quick Actions -->
     <div class="quick-actions">
-        <h3>⚡ দ্রুত কাজ</h3>
-        <div class="action-buttons">
-            <a href="@Url.Action("Search", "BloodSearch")" class="action-btn">
-                <i class="fas fa-search"></i>
-                রক্ত খুঁজুন
-            </a>
-            <a href="@Url.Action("Create", "Request")" class="action-btn">
-                <i class="fas fa-plus-circle"></i>
-                জরুরি অনুরোধ
-            </a>
-            <a href="@Url.Action("Register", "Account")" class="action-btn">
-                <i class="fas fa-user-plus"></i>
-                নতুন ডোনার
-            </a>
-            <a href="@Url.Action("Reports", "Admin")" class="action-btn">
-                <i class="fas fa-chart-bar"></i>
-                রিপোর্ট দেখুন
-            </a>
+        <div class="quick-actions-content">
+            <h3>⚡ দ্রুত অ্যাকশন</h3>
+            <div class="action-grid">
+                <a href="@Url.Action("Search", "BloodSearch")" class="action-btn">
+                    <i class="fas fa-search"></i>
+                    <span>রক্ত খুঁজুন</span>
+                </a>
+                <a href="@Url.Action("Create", "Request")" class="action-btn">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>জরুরি অনুরোধ</span>
+                </a>
+                <a href="@Url.Action("Register", "Account")" class="action-btn">
+                    <i class="fas fa-user-plus"></i>
+                    <span>নতুন রক্তদাতা</span>
+                </a>
+                <a href="@Url.Action("Reports", "Admin")" class="action-btn">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>রিপোর্ট দেখুন</span>
+                </a>
+            </div>
         </div>
     </div>
 </div>
