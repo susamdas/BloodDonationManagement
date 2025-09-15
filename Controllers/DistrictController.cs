@@ -44,7 +44,7 @@ namespace BloodDonationManagement.Controllers
         // POST: District/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("DistrictId,Name")] District district)
+        public async Task<IActionResult> Create([Bind("DistrictId,District_Name_Eng")] District district)
         {
             if (ModelState.IsValid)
             {
@@ -69,7 +69,7 @@ namespace BloodDonationManagement.Controllers
         // POST: District/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("DistrictId,Name")] District district)
+        public async Task<IActionResult> Edit(int id, [Bind("DistrictId,District_Name_Eng")] District district)
         {
             if (id != district.DistrictId) return NotFound();
 

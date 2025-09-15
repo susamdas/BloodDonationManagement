@@ -2,7 +2,7 @@
 using BloodDonationManagement.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace BloodDonationManagement.Controllers
 {
@@ -37,12 +37,31 @@ namespace BloodDonationManagement.Controllers
         }
 
         // GET: Donor/Create
+        //public IActionResult Create()
+        //{
+        //    ViewBag.DistrictId = new SelectList(_context.Districts, "DistrictId", "Name");
+        //    ViewBag.ThanaId = new SelectList(_context.Thanas, "ThanaId", "Name");
+        //    return View();
+        //}
         public IActionResult Create()
         {
-            ViewData["DistrictId"] = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(_context.Districts, "DistrictId", "Name");
-            ViewData["ThanaId"] = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(_context.Thanas, "ThanaId", "Name");
+            // সক্রিয় জেলা গুলো নিয়ে dropdown
+            ViewBag.DistrictId = new SelectList(
+                _context.Districts.Where(d => d.IsActive == true)
+                                  .OrderBy(d => d.District_Name_Bng)
+                                  .ToList(),
+                "DistrictId",
+                "District_Name_Bng"
+            );
+
+            // সক্রিয় থানা গুলো নিয়ে dropdown
+            ViewBag.ThanaId = new SelectList(_context.Thanas, "ThanaId", "Name");
+
             return View();
         }
+
+
+
 
         // POST: Donor/Create
         [HttpPost]
@@ -55,8 +74,8 @@ namespace BloodDonationManagement.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["DistrictId"] = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(_context.Districts, "DistrictId", "Name", donor.DistrictId);
-            ViewData["ThanaId"] = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(_context.Thanas, "ThanaId", "Name", donor.ThanaId);
+            ViewBag.DistrictId = new SelectList(_context.Districts, "DistrictId", "Name", donor.DistrictId);
+            ViewBag.ThanaId = new SelectList(_context.Thanas, "ThanaId", "Name", donor.ThanaId);
             return View(donor);
         }
 
@@ -68,8 +87,8 @@ namespace BloodDonationManagement.Controllers
             var donor = await _context.Donors.FindAsync(id);
             if (donor == null) return NotFound();
 
-            ViewData["DistrictId"] = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(_context.Districts, "DistrictId", "Name", donor.DistrictId);
-            ViewData["ThanaId"] = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(_context.Thanas, "ThanaId", "Name", donor.ThanaId);
+            ViewBag["DistrictId"] = new SelectList(_context.Districts, "DistrictId", "Name", donor.DistrictId);
+            ViewBag["ThanaId"] = new SelectList(_context.Thanas, "ThanaId", "Name", donor.ThanaId);
             return View(donor);
         }
 
@@ -96,8 +115,8 @@ namespace BloodDonationManagement.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["DistrictId"] = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(_context.Districts, "DistrictId", "Name", donor.DistrictId);
-            ViewData["ThanaId"] = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(_context.Thanas, "ThanaId", "Name", donor.ThanaId);
+            ViewBag["DistrictId"] = new SelectList(_context.Districts, "DistrictId", "Name", donor.DistrictId);
+            ViewBag["ThanaId"] = new SelectList(_context.Thanas, "ThanaId", "Name", donor.ThanaId);
             return View(donor);
         }
 

@@ -22,23 +22,6 @@ namespace BloodDonationManagement.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("BloodDonationManagement.Models.District", b =>
-                {
-                    b.Property<int>("DistrictId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DistrictId"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("DistrictId");
-
-                    b.ToTable("Districts");
-                });
-
             modelBuilder.Entity("BloodDonationManagement.Models.Donor", b =>
                 {
                     b.Property<int>("DonorId")
@@ -71,16 +54,11 @@ namespace BloodDonationManagement.Migrations
                     b.Property<int?>("ThanaId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ThanaId1")
-                        .HasColumnType("int");
-
                     b.HasKey("DonorId");
 
                     b.HasIndex("DistrictId");
 
                     b.HasIndex("ThanaId");
-
-                    b.HasIndex("ThanaId1");
 
                     b.ToTable("Donors");
                 });
@@ -93,10 +71,18 @@ namespace BloodDonationManagement.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ThanaId"));
 
-                    b.Property<int>("DistrictId")
+                    b.Property<int?>("DistrictId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("Thana_Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Thana_Name_Bng")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Thana_Name_Eng")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -105,6 +91,36 @@ namespace BloodDonationManagement.Migrations
                     b.HasIndex("DistrictId");
 
                     b.ToTable("Thanas");
+                });
+
+            modelBuilder.Entity("BloodDonationManagement.Models.Union", b =>
+                {
+                    b.Property<int>("UnionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UnionId"));
+
+                    b.Property<int?>("ThanaId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Union_Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Union_Name_Bng")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Union_Name_Eng")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("UnionId");
+
+                    b.HasIndex("ThanaId");
+
+                    b.ToTable("Unions");
                 });
 
             modelBuilder.Entity("BloodRequest", b =>
@@ -147,6 +163,72 @@ namespace BloodDonationManagement.Migrations
                     b.HasIndex("ThanaId");
 
                     b.ToTable("BloodRequests");
+                });
+
+            modelBuilder.Entity("District", b =>
+                {
+                    b.Property<int>("DistrictId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DistrictId"));
+
+                    b.Property<DateTime?>("CreateDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("CreateUser")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("District_Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("District_Name_Bng")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("District_Name_Eng")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("DivisionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Division_Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Division_Name_Bng")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Division_Name_Eng")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GbDistrictCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("InActiveDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool?>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("UpdateDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("UpdateUser")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ZoneCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("DistrictId");
+
+                    b.ToTable("Districts");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -353,18 +435,14 @@ namespace BloodDonationManagement.Migrations
 
             modelBuilder.Entity("BloodDonationManagement.Models.Donor", b =>
                 {
-                    b.HasOne("BloodDonationManagement.Models.District", "District")
-                        .WithMany("Donors")
+                    b.HasOne("District", "District")
+                        .WithMany()
                         .HasForeignKey("DistrictId");
 
                     b.HasOne("BloodDonationManagement.Models.Thana", "Thana")
                         .WithMany()
                         .HasForeignKey("ThanaId")
                         .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("BloodDonationManagement.Models.Thana", null)
-                        .WithMany("Donors")
-                        .HasForeignKey("ThanaId1");
 
                     b.Navigation("District");
 
@@ -373,18 +451,27 @@ namespace BloodDonationManagement.Migrations
 
             modelBuilder.Entity("BloodDonationManagement.Models.Thana", b =>
                 {
-                    b.HasOne("BloodDonationManagement.Models.District", "District")
+                    b.HasOne("District", "District")
                         .WithMany("Thanas")
                         .HasForeignKey("DistrictId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("District");
                 });
 
+            modelBuilder.Entity("BloodDonationManagement.Models.Union", b =>
+                {
+                    b.HasOne("BloodDonationManagement.Models.Thana", "Thana")
+                        .WithMany("Unions")
+                        .HasForeignKey("ThanaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Thana");
+                });
+
             modelBuilder.Entity("BloodRequest", b =>
                 {
-                    b.HasOne("BloodDonationManagement.Models.District", "District")
+                    b.HasOne("District", "District")
                         .WithMany()
                         .HasForeignKey("DistrictId");
 
@@ -448,16 +535,14 @@ namespace BloodDonationManagement.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("BloodDonationManagement.Models.District", b =>
-                {
-                    b.Navigation("Donors");
-
-                    b.Navigation("Thanas");
-                });
-
             modelBuilder.Entity("BloodDonationManagement.Models.Thana", b =>
                 {
-                    b.Navigation("Donors");
+                    b.Navigation("Unions");
+                });
+
+            modelBuilder.Entity("District", b =>
+                {
+                    b.Navigation("Thanas");
                 });
 #pragma warning restore 612, 618
         }
