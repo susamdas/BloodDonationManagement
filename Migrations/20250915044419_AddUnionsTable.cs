@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace BloodDonationManagement.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class AddUnionsTable : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -56,7 +56,21 @@ namespace BloodDonationManagement.Migrations
                 {
                     DistrictId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    DivisionId = table.Column<int>(type: "int", nullable: false),
+                    District_Code = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ZoneCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    GbDistrictCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    District_Name_Bng = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    District_Name_Eng = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Division_Code = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Division_Name_Bng = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Division_Name_Eng = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: true),
+                    InActiveDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreateUser = table.Column<long>(type: "bigint", nullable: true),
+                    CreateDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdateUser = table.Column<long>(type: "bigint", nullable: true),
+                    UpdateDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -175,8 +189,10 @@ namespace BloodDonationManagement.Migrations
                 {
                     ThanaId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    DistrictId = table.Column<int>(type: "int", nullable: false)
+                    DistrictId = table.Column<int>(type: "int", nullable: true),
+                    Thana_Code = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Thana_Name_Eng = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Thana_Name_Bng = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -186,7 +202,7 @@ namespace BloodDonationManagement.Migrations
                         column: x => x.DistrictId,
                         principalTable: "Districts",
                         principalColumn: "DistrictId",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -230,8 +246,7 @@ namespace BloodDonationManagement.Migrations
                     ThanaId = table.Column<int>(type: "int", nullable: true),
                     ContactNo = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LastDonationDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Status = table.Column<bool>(type: "bit", nullable: false),
-                    ThanaId1 = table.Column<int>(type: "int", nullable: true)
+                    Status = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -247,11 +262,28 @@ namespace BloodDonationManagement.Migrations
                         principalTable: "Thanas",
                         principalColumn: "ThanaId",
                         onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Unions",
+                columns: table => new
+                {
+                    UnionId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ThanaId = table.Column<int>(type: "int", nullable: true),
+                    Union_Code = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Union_Name_Eng = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Union_Name_Bng = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Unions", x => x.UnionId);
                     table.ForeignKey(
-                        name: "FK_Donors_Thanas_ThanaId1",
-                        column: x => x.ThanaId1,
+                        name: "FK_Unions_Thanas_ThanaId",
+                        column: x => x.ThanaId,
                         principalTable: "Thanas",
-                        principalColumn: "ThanaId");
+                        principalColumn: "ThanaId",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateIndex(
@@ -314,14 +346,14 @@ namespace BloodDonationManagement.Migrations
                 column: "ThanaId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Donors_ThanaId1",
-                table: "Donors",
-                column: "ThanaId1");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Thanas_DistrictId",
                 table: "Thanas",
                 column: "DistrictId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Unions_ThanaId",
+                table: "Unions",
+                column: "ThanaId");
         }
 
         /// <inheritdoc />
@@ -347,6 +379,9 @@ namespace BloodDonationManagement.Migrations
 
             migrationBuilder.DropTable(
                 name: "Donors");
+
+            migrationBuilder.DropTable(
+                name: "Unions");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
