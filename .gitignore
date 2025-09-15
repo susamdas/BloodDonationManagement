@@ -2,7 +2,7 @@
 /vendor/
 node_modules/
 .env
-/storage/*.key        # Laravel encryption key
+/storage/*.key
 /storage/framework/cache/*
 /storage/framework/sessions/*
 /storage/framework/views/*
@@ -13,17 +13,17 @@ node_modules/
 /package-lock.json
 /yarn.lock
 
-# VS / IDE ignores
+# Visual Studio / IDE ignores
 .vs/
 *.suo
 *.user
 *.userosscache
 *.sln.docstates
+
+# Build output (C# / .NET)
 bin/
 obj/
 
 # System files
 .DS_Store
 Thumbs.db
-bin/
-obj/
