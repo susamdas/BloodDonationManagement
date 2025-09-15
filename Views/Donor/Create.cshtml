@@ -3,6 +3,98 @@
     ViewData["Title"] = "Add New Donor";
     Layout = "~/Views/Shared/_MainLayout.cshtml";
 }
+<style>
+    /* Custom styles for the form */
+    .card {
+        border: none;
+        border-radius: 15px;
+    }
+
+    .card-header {
+        border-radius: 15px 15px 0 0 !important;
+        background: linear-gradient(135deg, #dc3545, #c82333);
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+
+    .form-control-lg {
+        border-radius: 10px;
+    }
+
+    .form-select-lg {
+        border-radius: 10px;
+    }
+
+    .btn-lg {
+        border-radius: 10px;
+        padding: 12px 30px;
+    }
+
+    .form-check-input:checked {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+
+    .form-switch .form-check-input {
+        width: 3em;
+        height: 1.5em;
+    }
+
+    /* Blood group input special styling */
+    input[name="BloodGroup"] {
+        text-transform: uppercase;
+        font-weight: bold;
+        font-size: 1.1em;
+    }
+
+    /* Animation for form sections */
+    .form-group, .row {
+        animation: fadeInUp 0.5s ease-in-out;
+    }
+
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Responsive adjustments */
+    @@media (max-width: 768px) {
+        .col-md-8.offset-md-2 {
+            margin: 0;
+            padding: 0 15px;
+        }
+
+        .card-header h4 {
+            font-size: 1.3rem;
+        }
+
+        .btn-lg {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    }
+
+    /* Loading state */
+    .btn:disabled {
+        opacity: 0.7;
+    }
+
+    /* Success state for valid inputs */
+    .form-control.is-valid {
+        border-color: #28a745;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='m2.3 6.73.4-.4 1.4-1.4L6.7 2.3l.4.4L3.7 6.13z'/%3e%3c/svg%3e");
+    }
+</style>
 
 <div class="container-fluid">
     <div class="row">
@@ -275,102 +367,4 @@
         });
     </script>
 
-    <style>
-        /* Custom styles for the form */
-        .card {
-            border: none;
-            border-radius: 15px;
-        }
-
-        .card-header {
-            border-radius: 15px 15px 0 0 !important;
-            background: linear-gradient(135deg, #dc3545, #c82333);
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: #dc3545;
-            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-        }
-
-        .form-control-lg {
-            border-radius: 10px;
-        }
-
-        .form-select-lg {
-            border-radius: 10px;
-        }
-
-        .btn-lg {
-            border-radius: 10px;
-            padding: 12px 30px;
-        }
-
-        .form-check-input:checked {
-            background-color: #28a745;
-            border-color: #28a745;
-        }
-
-        .form-switch .form-check-input {
-            width: 3em;
-            height: 1.5em;
-        }
-
-        /* Blood group input special styling */
-        input[name="BloodGroup"] {
-            text-transform: uppercase;
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-
-        /* Animation for form sections */
-        .form-group, .row {
-            animation: fadeInUp 0.5s ease-in-out;
-        }
-
-        @@keyframes fadeInUp {
-            from
-
-        {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        }
-
-        /* Responsive adjustments */
-        @@media (max-width: 768px) {
-            .col-md-8.offset-md-2
-
-        {
-            margin: 0;
-            padding: 0 15px;
-        }
-
-        .card-header h4 {
-            font-size: 1.3rem;
-        }
-
-        .btn-lg {
-            width: 100%;
-            margin-bottom: 10px;
-        }
-
-        }
-
-        /* Loading state */
-        .btn:disabled {
-            opacity: 0.7;
-        }
-
-        /* Success state for valid inputs */
-        .form-control.is-valid {
-            border-color: #28a745;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='m2.3 6.73.4-.4 1.4-1.4L6.7 2.3l.4.4L3.7 6.13z'/%3e%3c/svg%3e");
-        }
-    </style>
 }
