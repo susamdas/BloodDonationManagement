@@ -139,12 +139,6 @@ D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\
 D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\staticwebassets.build.json
 D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\staticwebassets.development.json
 D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\staticwebassets.build.endpoints.json
-D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\staticwebassets\msbuild.BloodDonationManagement.Microsoft.AspNetCore.StaticWebAssets.props
-D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\staticwebassets\msbuild.BloodDonationManagement.Microsoft.AspNetCore.StaticWebAssetEndpoints.props
-D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\staticwebassets\msbuild.build.BloodDonationManagement.props
-D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\staticwebassets\msbuild.buildMultiTargeting.BloodDonationManagement.props
-D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\staticwebassets\msbuild.buildTransitive.BloodDonationManagement.props
-D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\staticwebassets.pack.json
 D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\BloodDon.62698C94.Up2Date
 D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\BloodDonationManagement.dll
@@ -153,3 +147,8 @@ D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\
 D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\BloodDonationManagement.genruntimeconfig.cache
 D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\ref\BloodDonationManagement.dll
 D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\BloodDonationManagement.sourcelink.json
+D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\rpswa.dswa.cache.json
+D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\rjimswa.dswa.cache.json
+D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\rjsmrazor.dswa.cache.json
+D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\rjsmcshtml.dswa.cache.json
+D:\Grameen Bank\MyFile\Blood Donation Project\BloodDonationManagement\obj\Debug\net8.0\staticwebassets.build.json.cache
