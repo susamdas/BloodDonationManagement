@@ -1,14 +1,26 @@
 # Laravel / PHP ignores
 /vendor/
-/node_modules/
-/.env
+node_modules/
+.env
+/storage/*.key        # Laravel encryption key
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*
+
+# Composer & npm artifacts
+/composer.lock
+/package-lock.json
+/yarn.lock
 
 # VS / IDE ignores
 .vs/
-/*.suo
+*.suo
 *.user
 *.userosscache
 *.sln.docstates
+bin/
+obj/
 
 # System files
 .DS_Store
