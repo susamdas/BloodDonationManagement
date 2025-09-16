@@ -303,20 +303,6 @@
                 }
             });
 
-            // District Selection Enhancement
-            $('#DistrictId').change(function() {
-                var thanaSelect = $('#ThanaId');
-                var selectedText = $(this).find('option:selected').text();
-
-                if ($(this).val()) {
-                    thanaSelect.prop('disabled', false);
-                    $('.form-text small').text('Loading thanas for ' + selectedText + '...');
-                } else {
-                    thanaSelect.prop('disabled', true);
-                    $('.form-text small').text('Select district first');
-                }
-            });
-
             // Form Validation Enhancement
             $('#donorForm').on('submit', function(e) {
                 var form = $(this);
@@ -365,6 +351,78 @@
                 $('.alert-info').fadeOut('slow');
             }, 10000);
         });
+      // District Selection Enhancement
+        $('#DistrictId').change(function () {
+            var districtId = $(this).val();
+            var thanaSelect = $('#ThanaId');
+
+            if (districtId) {
+                thanaSelect.prop('disabled', false);
+                $('.form-text small').text('Loading thanas...');
+
+                $.ajax({
+                    url: '/Donor/GetThanasByDistrict',   // Controller action
+                    type: 'GET',
+                    data: { districtId: districtId },
+                    success: function (data) {
+                        thanaSelect.empty();
+                        thanaSelect.append('<option value="">-- Select Thana --</option>');
+                        $.each(data, function (i, thana) {
+                            thanaSelect.append('<option value="' + thana.thanaId + '">' + thana.thana_Name_Eng + '</option>');
+                        });
+                        $('.form-text small').text('Select a thana');
+                    },
+                    error: function () {
+                        thanaSelect.empty();
+                        thanaSelect.append('<option value="">Error loading thanas</option>');
+                        $('.form-text small').text('Error loading thanas. Please try again.');
+                    }
+                });
+            } else {
+                thanaSelect.prop('disabled', true);
+                thanaSelect.empty();
+                thanaSelect.append('<option value="">-- Select Thana --</option>');
+                $('.form-text small').text('Select district first');
+            }
+        });
+
+            $("#submitBtn").click(function (e) {
+            e.preventDefault();
+
+        var donorData = {
+            FullName: $("#FullName").val(),
+            BloodGroup: $("#BloodGroup").val(),
+            DistrictId: $("#DistrictId").val() || null,
+            ThanaId: $("#ThanaId").val() || null,
+            ContactNo: $("#ContactNo").val(),
+            LastDonationDate: $("#LastDonationDate").val() || null,
+            Status: $("#statusSwitch").is(":checked")
+        };
+                            $.ajax({
+            url: '/Donor/Create',
+            type: 'POST',
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(donorData),
+            success: function (res) {
+                if (res.success) {
+                    alert("Donor saved!");
+                    window.location.href = "/Donor/Index";
+                } else {
+                    alert("Save failed!");
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error("AJAX Status:", status);
+                console.error("AJAX Error:", error);
+                console.error("Server Response:", xhr.responseText);
+                alert("Error while saving donor.");
+            }
+        });
+
+
+        });
+
+
     </script>
 
 }

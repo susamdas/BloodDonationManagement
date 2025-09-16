@@ -1,14 +1,16 @@
-﻿using BloodDonationManagement.Models;
-using BloodDonationManagement.Data;
+﻿using BloodDonationManagement.Data;
+using BloodDonationManagement.Models;
+using BloodDonationManagement.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 
 namespace BloodDonationManagement.Controllers
 {
     public class DonorController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly DonorService _donorService;
 
         public DonorController(ApplicationDbContext context)
         {
@@ -36,26 +38,19 @@ namespace BloodDonationManagement.Controllers
             return View(donor);
         }
 
-        // GET: Donor/Create
-        //public IActionResult Create()
-        //{
-        //    ViewBag.DistrictId = new SelectList(_context.Districts, "DistrictId", "Name");
-        //    ViewBag.ThanaId = new SelectList(_context.Thanas, "ThanaId", "Name");
-        //    return View();
-        //}
+        //GET: Donor/Create
         public IActionResult Create()
         {
-            // সক্রিয় জেলা গুলো নিয়ে dropdown
             ViewBag.DistrictId = new SelectList(
                 _context.Districts.Where(d => d.IsActive == true)
-                                  .OrderBy(d => d.District_Name_Bng)
+                                  .OrderBy(d => d.District_Name_Eng)
                                   .ToList(),
                 "DistrictId",
-                "District_Name_Bng"
+                "District_Name_Eng"
             );
 
             // সক্রিয় থানা গুলো নিয়ে dropdown
-            ViewBag.ThanaId = new SelectList(_context.Thanas, "ThanaId", "Name");
+            ViewBag.ThanaId = new SelectList(_context.Thanas, "ThanaId", "Thana_Name_Eng");
 
             return View();
         }
@@ -63,21 +58,38 @@ namespace BloodDonationManagement.Controllers
 
 
 
+
         // POST: Donor/Create
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Donor donor)
+        public async Task<IActionResult> Create([FromBody] Donor donor)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
             {
-                _context.Add(donor);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                await _donorService.AddDonorAsync(donor);
+                return Json(new { success = true });
             }
-            ViewBag.DistrictId = new SelectList(_context.Districts, "DistrictId", "Name", donor.DistrictId);
-            ViewBag.ThanaId = new SelectList(_context.Thanas, "ThanaId", "Name", donor.ThanaId);
-            return View(donor);
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
         }
+
+
+        [HttpGet]
+        public JsonResult GetThanasByDistrict(int districtId)
+        {
+            var thanas = _context.Thanas
+                .Where(t => t.DistrictId == districtId)
+                .OrderBy(t => t.Thana_Name_Eng)
+                .Select(t => new { t.ThanaId, t.Thana_Name_Eng })
+                .ToList();
+
+            return Json(thanas);
+        }
+
 
         // GET: Donor/Edit/5
         public async Task<IActionResult> Edit(int? id)
@@ -87,8 +99,8 @@ namespace BloodDonationManagement.Controllers
             var donor = await _context.Donors.FindAsync(id);
             if (donor == null) return NotFound();
 
-            ViewBag["DistrictId"] = new SelectList(_context.Districts, "DistrictId", "Name", donor.DistrictId);
-            ViewBag["ThanaId"] = new SelectList(_context.Thanas, "ThanaId", "Name", donor.ThanaId);
+            ViewBag["DistrictId"] = new SelectList(_context.Districts, "DistrictId", "District_Name_Eng", donor.DistrictId);
+            ViewBag["ThanaId"] = new SelectList(_context.Thanas, "ThanaId", "Thana_Name_Eng", donor.ThanaId);
             return View(donor);
         }
 
@@ -115,8 +127,8 @@ namespace BloodDonationManagement.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewBag["DistrictId"] = new SelectList(_context.Districts, "DistrictId", "Name", donor.DistrictId);
-            ViewBag["ThanaId"] = new SelectList(_context.Thanas, "ThanaId", "Name", donor.ThanaId);
+            ViewBag["DistrictId"] = new SelectList(_context.Districts, "DistrictId", "District_Name_Eng", donor.DistrictId);
+            ViewBag["ThanaId"] = new SelectList(_context.Thanas, "ThanaId", "Thana_Name_Eng", donor.ThanaId);
             return View(donor);
         }
 
