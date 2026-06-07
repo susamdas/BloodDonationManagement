@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using BloodDonationManagement.Data;
 using BloodDonationManagement.Models;
 using System.Threading.Tasks;
@@ -19,7 +20,10 @@ namespace BloodDonationManagement.Controllers
         // GET: District
         public async Task<IActionResult> Index()
         {
-            var districts = await _context.Districts.ToListAsync();
+            var districts = await _context.Districts
+                .Include(d => d.Thanas)
+                .OrderBy(d => d.Name)
+                .ToListAsync();
             return View(districts);
         }
 
@@ -29,6 +33,7 @@ namespace BloodDonationManagement.Controllers
             if (id == null) return NotFound();
 
             var district = await _context.Districts
+                .Include(d => d.Thanas)
                 .FirstOrDefaultAsync(m => m.DistrictId == id);
             if (district == null) return NotFound();
 
@@ -36,12 +41,14 @@ namespace BloodDonationManagement.Controllers
         }
 
         // GET: District/Create
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             return View();
         }
 
         // POST: District/Create
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("DistrictId,Name")] District district)
@@ -56,6 +63,7 @@ namespace BloodDonationManagement.Controllers
         }
 
         // GET: District/Edit/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -67,6 +75,7 @@ namespace BloodDonationManagement.Controllers
         }
 
         // POST: District/Edit/5
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("DistrictId,Name")] District district)
@@ -91,6 +100,7 @@ namespace BloodDonationManagement.Controllers
         }
 
         // GET: District/Delete/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -103,6 +113,7 @@ namespace BloodDonationManagement.Controllers
         }
 
         // POST: District/Delete/5
+        [Authorize(Roles = "Admin")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -114,6 +125,18 @@ namespace BloodDonationManagement.Controllers
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        public async Task<JsonResult> GetThanasByDistrict(int districtId)
+        {
+            var thanas = await _context.Thanas
+                .Where(t => t.DistrictId == districtId)
+                .OrderBy(t => t.Name)
+                .Select(t => new { value = t.ThanaId, text = t.Name })
+                .ToListAsync();
+
+            return Json(thanas);
         }
 
         private bool DistrictExists(int id)

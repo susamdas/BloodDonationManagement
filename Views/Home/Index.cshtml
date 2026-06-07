@@ -1,476 +1,196 @@
-﻿@{
-    ViewData["Title"] = "হোম - রক্তদান ব্যবস্থাপনা";
+@model BloodDonationManagement.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
     Layout = "~/Views/Shared/_MainLayout.cshtml";
-    ViewBag.ShowHero = false; // Disable default hero section from layout
+    var allGroups = new[] { "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-" };
+    var maxStat = Model.BloodGroupStats.Values.DefaultIfEmpty(1).Max();
 }
 
-<style>
-    .custom-hero-section {
-        text-align: center;
-        margin: 2rem 0;
-        padding: 4rem 2rem;
-        background: linear-gradient(135deg, rgba(220, 38, 127, 0.9) 0%, rgba(239, 68, 68, 0.9) 100%);
-        border-radius: 25px;
-        color: white;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 20px 40px rgba(220, 38, 127, 0.2);
-    }
+<div class="container py-4">
 
-        .custom-hero-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-            animation: shimmer 4s infinite;
-        }
-
-    @@keyframes shimmer {
-        0%
-
-    {
-        left: -100%;
-    }
-
-    100% {
-        left: 100%;
-    }
-
-    }
-
-    .blood-drop {
-        font-size: 6rem;
-        margin-bottom: 1.5rem;
-        animation: float 3s ease-in-out infinite;
-        filter: drop-shadow(0 10px 20px rgba(239, 68, 68, 0.3));
-    }
-
-    @@keyframes float {
-        0%, 100%
-
-    {
-        transform: translateY(0px);
-    }
-
-    50% {
-        transform: translateY(-15px);
-    }
-
-    }
-
-    .custom-hero-section h1 {
-        font-size: 4rem;
-        font-weight: 800;
-        margin-bottom: 1.5rem;
-        text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
-        background: linear-gradient(45deg, #fff, #fecaca);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .hero-subtitle {
-        font-size: 1.4rem;
-        opacity: 0.95;
-        margin-bottom: 2.5rem;
-        font-weight: 400;
-        letter-spacing: 0.5px;
-    }
-
-    .stats-overview {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1.5rem;
-        margin: 2rem 0 3rem 0;
-    }
-
-    .stat-card {
-        background: white;
-        padding: 2rem 1.5rem;
-        border-radius: 20px;
-        text-align: center;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
-        border: 1px solid rgba(220, 38, 127, 0.1);
-    }
-
-        .stat-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-        }
-
-    .stat-icon {
-        font-size: 2.5rem;
-        margin-bottom: 1rem;
-    }
-
-    .stat-number {
-        font-size: 2.2rem;
-        font-weight: 800;
-        color: #dc2626;
-        display: block;
-        margin-bottom: 0.5rem;
-    }
-
-    .stat-label {
-        font-size: 1rem;
-        color: #6b7280;
-        font-weight: 500;
-    }
-
-    .main-features {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-        gap: 2.5rem;
-        margin: 4rem 0;
-    }
-
-    .feature-card {
-        background: white;
-        border-radius: 20px;
-        padding: 2.5rem;
-        text-align: center;
-        text-decoration: none;
-        color: inherit;
-        transition: all 0.4s ease;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        position: relative;
-        overflow: hidden;
-        border: 2px solid transparent;
-    }
-
-        .feature-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, #dc2626, #ef4444, #f87171);
-            transition: height 0.3s ease;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-12px);
-            box-shadow: 0 25px 50px rgba(220, 38, 127, 0.15);
-            text-decoration: none;
-            color: inherit;
-            border-color: rgba(220, 38, 127, 0.2);
-        }
-
-            .feature-card:hover::before {
-                height: 6px;
-            }
-
-    .feature-icon {
-        font-size: 4rem;
-        margin-bottom: 1.5rem;
-        display: block;
-    }
-
-    .donors-card .feature-icon {
-        color: #dc2626;
-    }
-
-    .requests-card .feature-icon {
-        color: #2563eb;
-    }
-
-    .districts-card .feature-icon {
-        color: #059669;
-    }
-
-    .feature-title {
-        font-size: 1.6rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-        color: #1f2937;
-    }
-
-    .feature-description {
-        color: #6b7280;
-        line-height: 1.7;
-        margin-bottom: 2rem;
-        font-size: 1.05rem;
-    }
-
-    .feature-stats {
-        display: flex;
-        justify-content: space-around;
-        padding-top: 1.5rem;
-        border-top: 2px solid #f3f4f6;
-    }
-
-    .feature-stat {
-        text-align: center;
-    }
-
-    .feature-stat-number {
-        font-size: 1.8rem;
-        font-weight: bold;
-        color: #dc2626;
-        display: block;
-    }
-
-    .feature-stat-label {
-        font-size: 0.9rem;
-        color: #9ca3af;
-        margin-top: 0.3rem;
-        font-weight: 500;
-    }
-
-    .quick-actions {
-        background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
-        border-radius: 25px;
-        padding: 3rem 2rem;
-        margin-top: 4rem;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-        position: relative;
-        overflow: hidden;
-    }
-
-        .quick-actions::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle, rgba(220,38,127,0.1) 0%, transparent 70%);
-            animation: pulse 4s ease-in-out infinite;
-        }
-
-    @@keyframes pulse {
-        0%, 100%
-
-    {
-        transform: scale(1);
-        opacity: 0.5;
-    }
-
-    50% {
-        transform: scale(1.1);
-        opacity: 0.8;
-    }
-
-    }
-
-    .quick-actions h3 {
-        text-align: center;
-        margin-bottom: 2.5rem;
-        color: white;
-        font-size: 2rem;
-        font-weight: 700;
-        position: relative;
-        z-index: 1;
-    }
-
-    .action-buttons {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 1.5rem;
-        position: relative;
-        z-index: 1;
-    }
-
-    .action-btn {
-        background: linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f87171 100%);
-        color: white;
-        padding: 1.5rem 1rem;
-        border-radius: 15px;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.8rem;
-        font-weight: 600;
-        font-size: 1.05rem;
-        box-shadow: 0 8px 20px rgba(220, 38, 127, 0.3);
-    }
-
-        .action-btn:hover {
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: 0 15px 30px rgba(220, 38, 127, 0.4);
-            color: white;
-            text-decoration: none;
-            background: linear-gradient(135deg, #b91c1c 0%, #dc2626 50%, #ef4444 100%);
-        }
-
-        .action-btn i {
-            font-size: 1.2rem;
-        }
-
-    /* Mobile Responsiveness */
-    @@media (max-width: 768px) {
-        .custom-hero-section
-
-    {
-        padding: 3rem 1.5rem;
-        margin: 1rem;
-    }
-
-    .custom-hero-section h1 {
-        font-size: 2.8rem;
-    }
-
-    .hero-subtitle {
-        font-size: 1.2rem;
-    }
-
-    .blood-drop {
-        font-size: 4.5rem;
-    }
-
-    .main-features {
-        grid-template-columns: 1fr;
-        margin: 2rem 0;
-    }
-
-    .feature-card {
-        padding: 2rem 1.5rem;
-    }
-
-    .stats-overview {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
-    }
-
-    .action-buttons {
-        grid-template-columns: 1fr;
-    }
-
-    .quick-actions {
-        margin: 2rem 1rem;
-        padding: 2rem 1.5rem;
-    }
-
-    }
-
-    @@media (max-width: 480px) {
-        .custom-hero-section h1
-
-    {
-        font-size: 2.2rem;
-    }
-
-    .stats-overview {
-        grid-template-columns: 1fr;
-    }
-
-    .stat-card {
-        padding: 1.5rem 1rem;
-    }
-
-    }
-</style>
-
-<div class="container">
-    <!-- Custom Hero Section -->
-    <div class="custom-hero-section">
-        <div class="blood-drop">🩸</div>
-        <h1>স্বাগতম</h1>
-        <p class="hero-subtitle">রক্ত দান ব্যবস্থাপনা সিস্টেমে - প্রতিটি ড্রপ রক্ত, একটি জীবন বাঁচায়</p>
-    </div>
-
-    <!-- Statistics Overview -->
-    <div class="stats-overview">
-        <div class="stat-card">
-            <div class="stat-icon">👥</div>
-            <span class="stat-number">247</span>
-            <span class="stat-label">মোট ডোনার</span>
+    <!-- Stats Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted small mb-1">Total Donors</p>
+                            <h2 class="fw-bold text-danger mb-0">@Model.TotalDonors</h2>
+                            <small class="text-success"><i class="fas fa-check-circle me-1"></i>@Model.ActiveDonors active</small>
+                        </div>
+                        <div class="bg-danger bg-opacity-10 rounded-3 p-2">
+                            <i class="fas fa-users fa-lg text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="stat-card">
-            <div class="stat-icon">🩸</div>
-            <span class="stat-number">12</span>
-            <span class="stat-label">জরুরি অনুরোধ</span>
+        <div class="col-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted small mb-1">Blood Requests</p>
+                            <h2 class="fw-bold text-primary mb-0">@Model.TotalRequests</h2>
+                            <small class="text-warning"><i class="fas fa-clock me-1"></i>@Model.PendingRequests pending</small>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 rounded-3 p-2">
+                            <i class="fas fa-hand-holding-medical fa-lg text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="stat-card">
-            <div class="stat-icon">✅</div>
-            <span class="stat-number">156</span>
-            <span class="stat-label">সফল দান</span>
+        <div class="col-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted small mb-1">Fulfilled</p>
+                            <h2 class="fw-bold text-success mb-0">@Model.FulfilledRequests</h2>
+                            <small class="text-muted">Lives saved</small>
+                        </div>
+                        <div class="bg-success bg-opacity-10 rounded-3 p-2">
+                            <i class="fas fa-heart fa-lg text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="stat-card">
-            <div class="stat-icon">🏢</div>
-            <span class="stat-number">64</span>
-            <span class="stat-label">জেলা</span>
+        <div class="col-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted small mb-1">Locations</p>
+                            <h2 class="fw-bold text-info mb-0">@Model.DistrictCount</h2>
+                            <small class="text-muted">@Model.ThanaCount thanas</small>
+                        </div>
+                        <div class="bg-info bg-opacity-10 rounded-3 p-2">
+                            <i class="fas fa-map-marker-alt fa-lg text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Main Features -->
-    <div class="main-features">
-        <a href="@Url.Action("Index", "Donor")" class="feature-card donors-card">
-            <span class="feature-icon">👥</span>
-            <h3 class="feature-title">ডোনার ম্যানেজমেন্ট</h3>
-            <p class="feature-description">নতুন ডোনার রেজিস্ট্রেশন, প্রোফাইল আপডেট এবং সমস্ত ডোনারদের তথ্য সুন্দরভাবে ম্যানেজ করুন</p>
-            <div class="feature-stats">
-                <div class="feature-stat">
-                    <span class="feature-stat-number">247</span>
-                    <span class="feature-stat-label">মোট ডোনার</span>
+    <div class="row g-4">
+        <!-- Blood Group Availability -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pt-3">
+                    <h5 class="mb-0"><i class="fas fa-tint text-danger me-2"></i>Blood Group Availability</h5>
+                    <small class="text-muted">Active donors by blood group</small>
                 </div>
-                <div class="feature-stat">
-                    <span class="feature-stat-number">89</span>
-                    <span class="feature-stat-label">সক্রিয় ডোনার</span>
+                <div class="card-body pt-2">
+                    @foreach (var group in allGroups)
+                    {
+                        var count = Model.BloodGroupStats.GetValueOrDefault(group, 0);
+                        var pct = maxStat > 0 ? (int)((double)count / maxStat * 100) : 0;
+                        var color = group.Contains("O") ? "danger" : (group.Contains("AB") ? "purple" : (group.Contains("A") ? "primary" : "warning"));
+                        var colorClass = group.Contains("O") ? "bg-danger" : (group.Contains("AB") ? "bg-secondary" : (group.Contains("A+") || group.Contains("A-") ? "bg-primary" : "bg-warning"));
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="fw-semibold"><span class="badge bg-danger me-2">@group</span></span>
+                                <span class="text-muted small">@count donors</span>
+                            </div>
+                            <div class="progress" style="height:10px;border-radius:8px">
+                                <div class="progress-bar @colorClass" style="width:@pct%;border-radius:8px;transition:width .8s ease"></div>
+                            </div>
+                        </div>
+                    }
+                    @if (!Model.BloodGroupStats.Any())
+                    {
+                        <p class="text-muted text-center py-3"><i class="fas fa-info-circle me-2"></i>No donors registered yet.</p>
+                    }
                 </div>
             </div>
-        </a>
+        </div>
 
-        <a href="@Url.Action("Index", "Request")" class="feature-card requests-card">
-            <span class="feature-icon">🩸</span>
-            <h3 class="feature-title">রক্তের অনুরোধ</h3>
-            <p class="feature-description">জরুরি রক্তের অনুরোধ দ্রুত দেখুন, প্রসেস করুন এবং কার্যকরভাবে ম্যানেজ করুন</p>
-            <div class="feature-stats">
-                <div class="feature-stat">
-                    <span class="feature-stat-number">12</span>
-                    <span class="feature-stat-label">মুলতুবি</span>
+        <!-- Recent Urgent Requests -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pt-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0"><i class="fas fa-bell text-warning me-2"></i>Pending Requests</h5>
+                        <small class="text-muted">Latest urgent blood needs</small>
+                    </div>
+                    <a asp-controller="BloodRequest" asp-action="Index" class="btn btn-sm btn-outline-danger">View All</a>
                 </div>
-                <div class="feature-stat">
-                    <span class="feature-stat-number">156</span>
-                    <span class="feature-stat-label">সম্পূর্ণ</span>
+                <div class="card-body pt-2 p-0">
+                    @if (!Model.RecentRequests.Any())
+                    {
+                        <p class="text-muted text-center py-4"><i class="fas fa-check-circle text-success me-2"></i>No pending requests.</p>
+                    }
+                    else
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var req in Model.RecentRequests)
+                            {
+                                var urgencyBg = req.Urgency == BloodDonationManagement.Models.UrgencyLevel.Critical ? "danger"
+                                    : req.Urgency == BloodDonationManagement.Models.UrgencyLevel.Urgent ? "warning" : "success";
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <span class="badge bg-danger me-2">@req.BloodGroup</span>
+                                            <span class="badge bg-@urgencyBg me-2">@req.Urgency</span>
+                                            <strong>@req.PatientName</strong>
+                                        </div>
+                                        <small class="text-muted">@req.District?.Name</small>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(req.HospitalName))
+                                    {
+                                        <small class="text-muted"><i class="fas fa-hospital me-1"></i>@req.HospitalName</small>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    }
                 </div>
             </div>
-        </a>
-
-        <a href="@Url.Action("Index", "Admin")" class="feature-card districts-card">
-            <span class="feature-icon">🏢</span>
-            <h3 class="feature-title">জেলা ও থানা</h3>
-            <p class="feature-description">বাংলাদেশের সকল জেলা এবং থানার তথ্য সুষ্ঠুভাবে ম্যানেজ এবং আপডেট করুন</p>
-            <div class="feature-stats">
-                <div class="feature-stat">
-                    <span class="feature-stat-number">64</span>
-                    <span class="feature-stat-label">জেলা</span>
-                </div>
-                <div class="feature-stat">
-                    <span class="feature-stat-number">495</span>
-                    <span class="feature-stat-label">থানা</span>
-                </div>
-            </div>
-        </a>
+        </div>
     </div>
 
     <!-- Quick Actions -->
-    <div class="quick-actions">
-        <h3>⚡ দ্রুত কাজ</h3>
-        <div class="action-buttons">
-            <a href="@Url.Action("Search", "BloodSearch")" class="action-btn">
-                <i class="fas fa-search"></i>
-                রক্ত খুঁজুন
+    <div class="row g-3 mt-2">
+        <div class="col-md-3">
+            <a asp-controller="Donor" asp-action="Index" class="card border-0 shadow-sm text-decoration-none h-100 card-hover">
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-users fa-2x text-danger mb-2"></i>
+                    <h6 class="mb-0">Manage Donors</h6>
+                </div>
             </a>
-            <a href="@Url.Action("Create", "Request")" class="action-btn">
-                <i class="fas fa-plus-circle"></i>
-                জরুরি অনুরোধ
+        </div>
+        <div class="col-md-3">
+            <a asp-controller="BloodRequest" asp-action="Create" class="card border-0 shadow-sm text-decoration-none h-100 card-hover">
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-plus-circle fa-2x text-primary mb-2"></i>
+                    <h6 class="mb-0">Request Blood</h6>
+                </div>
             </a>
-            <a href="@Url.Action("Register", "Account")" class="action-btn">
-                <i class="fas fa-user-plus"></i>
-                নতুন ডোনার
+        </div>
+        <div class="col-md-3">
+            <a asp-controller="BloodSearch" asp-action="Index" class="card border-0 shadow-sm text-decoration-none h-100 card-hover">
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-search fa-2x text-success mb-2"></i>
+                    <h6 class="mb-0">Find Donors</h6>
+                </div>
             </a>
-            <a href="@Url.Action("Reports", "Admin")" class="action-btn">
-                <i class="fas fa-chart-bar"></i>
-                রিপোর্ট দেখুন
+        </div>
+        <div class="col-md-3">
+            <a asp-controller="Map" asp-action="Index" class="card border-0 shadow-sm text-decoration-none h-100 card-hover">
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-map-marked-alt fa-2x text-info mb-2"></i>
+                    <h6 class="mb-0">Live Map</h6>
+                </div>
             </a>
         </div>
     </div>
 </div>
+
+<style>
+    .card-hover { transition: transform .15s, box-shadow .15s; }
+    .card-hover:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.1) !important; }
+</style>

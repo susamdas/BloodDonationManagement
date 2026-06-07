@@ -1,0 +1,210 @@
+@model IEnumerable<BloodDonationManagement.Models.BloodRequest>
+@using BloodDonationManagement.Models
+@{
+    ViewData["Title"] = "Blood Requests";
+    Layout = "~/Views/Shared/_MainLayout.cshtml";
+    ViewBag.ShowHero = false;
+
+    var pending   = Model.Count(r => r.Status == "Pending");
+    var fulfilled = Model.Count(r => r.Status == "Fulfilled");
+    var critical  = Model.Count(r => r.Urgency == UrgencyLevel.Critical && r.Status == "Pending");
+}
+
+<div class="container py-4">
+
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+        <div>
+            <h2 class="mb-0"><i class="fas fa-hand-holding-medical text-danger me-2"></i>Blood Requests</h2>
+            <small class="text-muted">Manage and fulfill blood requests across Bangladesh</small>
+        </div>
+        <a asp-action="Create" class="btn btn-danger">
+            <i class="fas fa-plus me-1"></i>New Request
+        </a>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm text-center py-3">
+                <div class="h3 fw-bold text-primary mb-0">@Model.Count()</div>
+                <small class="text-muted">Total</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm text-center py-3">
+                <div class="h3 fw-bold text-warning mb-0">@pending</div>
+                <small class="text-muted">Pending</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm text-center py-3">
+                <div class="h3 fw-bold text-danger mb-0">@critical</div>
+                <small class="text-muted">Critical</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm text-center py-3">
+                <div class="h3 fw-bold text-success mb-0">@fulfilled</div>
+                <small class="text-muted">Fulfilled</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter tabs -->
+    <div class="mb-3">
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-outline-secondary btn-sm active" id="filterAll">All</button>
+            <button type="button" class="btn btn-outline-danger btn-sm" id="filterCritical">
+                <i class="fas fa-skull-crossbones me-1"></i>Critical
+            </button>
+            <button type="button" class="btn btn-outline-warning btn-sm" id="filterUrgent">
+                <i class="fas fa-exclamation-circle me-1"></i>Urgent
+            </button>
+            <button type="button" class="btn btn-outline-success btn-sm" id="filterPending">Pending only</button>
+        </div>
+    </div>
+
+    <!-- Table -->
+    @if (!Model.Any())
+    {
+        <div class="card border-0 shadow-sm text-center py-5">
+            <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+            <p class="text-muted">No blood requests yet.</p>
+            <a asp-action="Create" class="btn btn-danger mx-auto" style="width:fit-content">
+                <i class="fas fa-plus me-1"></i>Create First Request
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="requestTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Urgency</th>
+                            <th>Patient</th>
+                            <th>Blood Group</th>
+                            <th>Hospital / Location</th>
+                            <th>Contact</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var req in Model)
+                        {
+                            var urgencyBg    = req.Urgency == UrgencyLevel.Critical ? "danger"
+                                             : req.Urgency == UrgencyLevel.Urgent   ? "warning" : "success";
+                            var urgencyIcon  = req.Urgency == UrgencyLevel.Critical
+                                             ? "<i class='fas fa-skull-crossbones me-1'></i>"
+                                             : req.Urgency == UrgencyLevel.Urgent
+                                             ? "<i class='fas fa-exclamation-circle me-1'></i>"
+                                             : "<i class='fas fa-check-circle me-1'></i>";
+                            var statusBg     = req.Status == "Fulfilled" ? "success"
+                                             : req.Status == "Pending"   ? "warning" : "secondary";
+                            var rowClass     = req.Urgency == UrgencyLevel.Critical && req.Status == "Pending"
+                                             ? "table-danger" : "";
+
+                            <tr class="@rowClass request-row"
+                                data-urgency="@((int)req.Urgency)"
+                                data-status="@req.Status">
+                                <td>
+                                    <span class="badge bg-@urgencyBg">
+                                        @Html.Raw(urgencyIcon)@req.Urgency
+                                    </span>
+                                </td>
+                                <td>
+                                    <strong>@req.PatientName</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-danger fs-6 px-2">@req.BloodGroup</span>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(req.HospitalName))
+                                    {
+                                        <div><i class="fas fa-hospital me-1 text-muted"></i>@req.HospitalName</div>
+                                    }
+                                    <small class="text-muted">
+                                        <i class="fas fa-map-marker-alt me-1"></i>
+                                        @(req.District?.Name ?? "—")@(req.Thana != null ? " / " + req.Thana.Name : "")
+                                    </small>
+                                </td>
+                                <td>
+                                    <a href="tel:@req.ContactNo" class="text-decoration-none">
+                                        <i class="fas fa-phone me-1 text-success"></i>@req.ContactNo
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge bg-@statusBg">@req.Status</span>
+                                </td>
+                                <td>
+                                    <small class="text-muted">@req.CreatedDate.ToString("dd MMM yy")<br />@req.CreatedDate.ToString("HH:mm")</small>
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-flex gap-1 justify-content-end flex-wrap">
+                                        @if (User.IsInRole("Admin") && req.Status == "Pending")
+                                        {
+                                            <form asp-action="Fulfill" asp-route-id="@req.BloodRequestId" method="post" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-success" title="Mark Fulfilled"
+                                                        onclick="return confirm('Mark this request as fulfilled?')">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        <a asp-action="Details" asp-route-id="@req.BloodRequestId"
+                                           class="btn btn-sm btn-outline-secondary" title="Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@req.BloodRequestId"
+                                               class="btn btn-sm btn-outline-primary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a asp-action="Delete" asp-route-id="@req.BloodRequestId"
+                                               class="btn btn-sm btn-outline-danger" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Filter tabs
+        function filterRows(fn) {
+            document.querySelectorAll('.request-row').forEach(function (row) {
+                row.style.display = fn(row) ? '' : 'none';
+            });
+        }
+
+        document.getElementById('filterAll').addEventListener('click', function () {
+            setActive(this); filterRows(() => true);
+        });
+        document.getElementById('filterCritical').addEventListener('click', function () {
+            setActive(this); filterRows(r => r.dataset.urgency === '2');
+        });
+        document.getElementById('filterUrgent').addEventListener('click', function () {
+            setActive(this); filterRows(r => r.dataset.urgency === '1');
+        });
+        document.getElementById('filterPending').addEventListener('click', function () {
+            setActive(this); filterRows(r => r.dataset.status === 'Pending');
+        });
+
+        function setActive(btn) {
+            document.querySelectorAll('.btn-group .btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+    </script>
+}

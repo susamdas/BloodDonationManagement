@@ -1,0 +1,49 @@
+@model BloodDonationManagement.Models.BloodRequest
+
+@{
+    ViewData["Title"] = "Blood Request Details";
+    Layout = "~/Views/Shared/_MainLayout.cshtml";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-xl-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h1 class="h4 mb-4">Request Details</h1>
+
+                    <dl class="row mb-4">
+                        <dt class="col-sm-4">Patient Name</dt>
+                        <dd class="col-sm-8">@Model.PatientName</dd>
+
+                        <dt class="col-sm-4">Blood Group</dt>
+                        <dd class="col-sm-8">@Model.BloodGroup</dd>
+
+                        <dt class="col-sm-4">District</dt>
+                        <dd class="col-sm-8">@Model.District?.Name</dd>
+
+                        <dt class="col-sm-4">Thana</dt>
+                        <dd class="col-sm-8">@Model.Thana?.Name</dd>
+
+                        <dt class="col-sm-4">Contact Number</dt>
+                        <dd class="col-sm-8">@Model.ContactNo</dd>
+
+                        <dt class="col-sm-4">Message</dt>
+                        <dd class="col-sm-8">@Model.Message</dd>
+
+                        <dt class="col-sm-4">Location</dt>
+                        <dd class="col-sm-8">Latitude: @Model.Latitude, Longitude: @Model.Longitude</dd>
+
+                        <dt class="col-sm-4">Status</dt>
+                        <dd class="col-sm-8">@Model.Status</dd>
+                    </dl>
+
+                    <div class="d-flex justify-content-end">
+                        <a asp-action="Edit" asp-route-id="@Model.BloodRequestId" class="btn btn-outline-primary me-2">Edit</a>
+                        <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,21 @@
+@model BloodDonationManagement.Models.District
+@{
+    ViewData["Title"] = "Delete District";
+}
+
+<h1 class="mb-4">Delete District</h1>
+
+<div class="alert alert-warning">
+    <strong>Warning:</strong> Deleting this district may affect donor and request records that reference it.
+</div>
+
+<div class="mb-3">
+    <h5>Name</h5>
+    <p>@Model.Name</p>
+</div>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="DistrictId" />
+    <button type="submit" class="btn btn-danger me-2">Delete</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>

@@ -1,0 +1,278 @@
+@{
+    ViewData["Title"] = "Live Blood Map";
+    Layout = "~/Views/Shared/_MainLayout.cshtml";
+    ViewBag.ShowHero = false;
+}
+
+@section Head {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #mapWrap { height: calc(100vh - 70px); display: flex; }
+        #sidebar {
+            width: 300px; min-width: 260px; background: white;
+            box-shadow: 2px 0 12px rgba(0,0,0,.08); overflow-y: auto;
+            display: flex; flex-direction: column; z-index: 1;
+        }
+        #map { flex: 1; }
+        .sidebar-header { background: #dc3545; color: white; padding: 16px; }
+        .filter-section { padding: 14px; border-bottom: 1px solid #f0f0f0; }
+        .bg-pill {
+            display: inline-block; padding: 3px 10px; border-radius: 20px;
+            cursor: pointer; border: 2px solid #dc3545; color: #dc3545;
+            font-weight: 600; font-size: .8rem; margin: 2px; transition: all .15s;
+        }
+        .bg-pill.active { background: #dc3545; color: white; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+        #statsBox { padding: 14px; font-size: .85rem; }
+        /* Pulsing marker for critical */
+        .pulse-marker { border-radius: 50%; animation: mapPulse 1.2s infinite; }
+        @@keyframes mapPulse {
+            0%   { box-shadow: 0 0 0 0 rgba(220,53,69,.7); }
+            70%  { box-shadow: 0 0 0 12px rgba(220,53,69,0); }
+            100% { box-shadow: 0 0 0 0 rgba(220,53,69,0); }
+        }
+        @@media(max-width:768px) {
+            #mapWrap { flex-direction: column; height: auto; }
+            #sidebar { width: 100%; max-height: 220px; }
+            #map { height: 60vh; }
+        }
+    </style>
+}
+
+<div id="mapWrap">
+    <!-- Sidebar -->
+    <div id="sidebar">
+        <div class="sidebar-header">
+            <h6 class="mb-1"><i class="fas fa-map-marked-alt me-2"></i>Live Blood Map</h6>
+            <small>Real-time donors &amp; requests across Bangladesh</small>
+        </div>
+
+        <!-- Layer toggles -->
+        <div class="filter-section">
+            <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" id="showDonors" checked />
+                <label class="form-check-label fw-semibold" for="showDonors">
+                    <span class="legend-dot" style="background:#0d6efd"></span>Show Donors
+                    <span class="badge bg-primary ms-1" id="donorCount">0</span>
+                </label>
+            </div>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="showRequests" checked />
+                <label class="form-check-label fw-semibold" for="showRequests">
+                    <span class="legend-dot" style="background:#dc3545"></span>Show Requests
+                    <span class="badge bg-danger ms-1" id="requestCount">0</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Blood group filter -->
+        <div class="filter-section">
+            <p class="fw-semibold mb-2 small text-muted">FILTER BY BLOOD GROUP</p>
+            <div id="bgFilter">
+                <span class="bg-pill active" data-bg="">All</span>
+                @foreach (var bg in new[] { "A+","A-","B+","B-","AB+","AB-","O+","O-" })
+                {
+                    <span class="bg-pill" data-bg="@bg">@bg</span>
+                }
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="filter-section">
+            <p class="fw-semibold mb-2 small text-muted">LEGEND</p>
+            <div class="small">
+                <div class="mb-1"><span class="legend-dot" style="background:#0d6efd"></span>Donor (available)</div>
+                <div class="mb-1"><span class="legend-dot" style="background:#198754"></span>Normal request</div>
+                <div class="mb-1"><span class="legend-dot" style="background:#fd7e14"></span>Urgent request</div>
+                <div class="mb-1"><span class="legend-dot" style="background:#dc3545"></span>Critical request <i class="fas fa-circle-notch fa-spin ms-1 text-danger" style="font-size:.7rem"></i></div>
+            </div>
+        </div>
+
+        <!-- Locate me -->
+        <div class="filter-section">
+            <button class="btn btn-outline-primary btn-sm w-100" id="locateBtn">
+                <i class="fas fa-location-arrow me-1"></i>Find Me on Map
+            </button>
+        </div>
+
+        <!-- Live stats -->
+        <div id="statsBox" class="mt-auto border-top">
+            <p class="fw-semibold mb-1 text-muted small">LIVE STATS</p>
+            <div id="liveStats">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Map -->
+    <div id="map"></div>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Init map centered on Bangladesh
+        var map = L.map('map', { zoomControl: true }).setView([23.6850, 90.3563], 7);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 18
+        }).addTo(map);
+
+        var donorLayer   = L.layerGroup().addTo(map);
+        var requestLayer = L.layerGroup().addTo(map);
+        var meLayer      = L.layerGroup().addTo(map);
+
+        var allDonors   = [];
+        var allRequests = [];
+        var activeGroup = '';
+
+        // Custom icons
+        function donorIcon(bg) {
+            return L.divIcon({
+                className: '',
+                html: '<div style="background:#0d6efd;color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3)">' + bg + '</div>',
+                iconSize: [32, 32], iconAnchor: [16, 16]
+            });
+        }
+
+        function requestIcon(urgency, bg) {
+            var colors = { 0: '#198754', 1: '#fd7e14', 2: '#dc3545' };
+            var color = colors[urgency] || '#dc3545';
+            var pulse = urgency === 2 ? 'pulse-marker' : '';
+            return L.divIcon({
+                className: '',
+                html: '<div class="' + pulse + '" style="background:' + color + ';color:white;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.4)">' + bg + '</div>',
+                iconSize: [36, 36], iconAnchor: [18, 18]
+            });
+        }
+
+        function renderDonors() {
+            donorLayer.clearLayers();
+            var count = 0;
+            allDonors.forEach(function (d) {
+                if (activeGroup && d.bloodGroup !== activeGroup) return;
+                count++;
+                var m = L.marker([d.latitude, d.longitude], { icon: donorIcon(d.bloodGroup) });
+                var lastDon = d.lastDonation ? d.lastDonation : 'Not recorded';
+                m.bindPopup(
+                    '<div style="min-width:180px">' +
+                    '<h6 class="mb-1">' + d.fullName + '</h6>' +
+                    '<span class="badge bg-danger me-1">' + d.bloodGroup + '</span>' +
+                    '<span class="badge bg-primary">Donor</span>' +
+                    '<div class="mt-2"><i class="fas fa-map-marker-alt me-1 text-muted"></i>' + (d.district || '') + (d.thana ? ', ' + d.thana : '') + '</div>' +
+                    '<div><i class="fas fa-phone me-1 text-muted"></i><a href="tel:' + d.contactNo + '">' + d.contactNo + '</a></div>' +
+                    '<div class="text-muted small mt-1">Last donation: ' + lastDon + '</div>' +
+                    '</div>'
+                );
+                donorLayer.addLayer(m);
+            });
+            document.getElementById('donorCount').textContent = count;
+        }
+
+        function renderRequests() {
+            requestLayer.clearLayers();
+            var count = 0;
+            allRequests.forEach(function (r) {
+                if (activeGroup && r.bloodGroup !== activeGroup) return;
+                count++;
+                var urgencyLabels = ['Normal', 'Urgent', 'Critical'];
+                var urgencyBadge = ['success', 'warning', 'danger'];
+                var m = L.marker([r.latitude, r.longitude], { icon: requestIcon(r.urgency, r.bloodGroup) });
+                m.bindPopup(
+                    '<div style="min-width:190px">' +
+                    '<h6 class="mb-1">' + r.patientName + '</h6>' +
+                    '<span class="badge bg-danger me-1">' + r.bloodGroup + '</span>' +
+                    '<span class="badge bg-' + urgencyBadge[r.urgency] + '">' + urgencyLabels[r.urgency] + '</span>' +
+                    (r.hospital ? '<div class="mt-2"><i class="fas fa-hospital me-1 text-muted"></i>' + r.hospital + '</div>' : '') +
+                    '<div class="mt-1"><i class="fas fa-map-marker-alt me-1 text-muted"></i>' + (r.district || '') + '</div>' +
+                    '<div><i class="fas fa-phone me-1 text-muted"></i><a href="tel:' + r.contactNo + '">' + r.contactNo + '</a></div>' +
+                    '<div class="text-muted small mt-1">' + r.created + '</div>' +
+                    '</div>'
+                );
+                requestLayer.addLayer(m);
+            });
+            document.getElementById('requestCount').textContent = count;
+        }
+
+        // Load data
+        function loadData() {
+            var bloodGroupParam = activeGroup ? '?bloodGroup=' + encodeURIComponent(activeGroup) : '';
+            Promise.all([
+                fetch('/api/MapData/donors' + bloodGroupParam).then(r => r.json()),
+                fetch('/api/MapData/requests').then(r => r.json()),
+                fetch('/api/MapData/stats').then(r => r.json())
+            ]).then(function (results) {
+                allDonors   = results[0];
+                allRequests = results[1];
+                var stats   = results[2];
+                renderDonors();
+                renderRequests();
+                // Live stats
+                var html = '<div><strong>' + stats.totalDonors + '</strong> active donors</div>' +
+                    '<div><strong class="text-danger">' + stats.pendingRequests + '</strong> pending requests</div>';
+                if (stats.bloodGroupStats && stats.bloodGroupStats.length) {
+                    html += '<div class="mt-2 text-muted">Top groups on map:</div>';
+                    stats.bloodGroupStats.slice(0, 4).forEach(function (s) {
+                        html += '<span class="badge bg-danger me-1 mb-1">' + s.bloodGroup + ' (' + s.count + ')</span>';
+                    });
+                }
+                document.getElementById('liveStats').innerHTML = html;
+            });
+        }
+
+        loadData();
+
+        // Layer toggles
+        document.getElementById('showDonors').addEventListener('change', function () {
+            if (this.checked) map.addLayer(donorLayer);
+            else map.removeLayer(donorLayer);
+        });
+        document.getElementById('showRequests').addEventListener('change', function () {
+            if (this.checked) map.addLayer(requestLayer);
+            else map.removeLayer(requestLayer);
+        });
+
+        // Blood group filter pills
+        document.querySelectorAll('.bg-pill').forEach(function (pill) {
+            pill.addEventListener('click', function () {
+                document.querySelectorAll('.bg-pill').forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+                activeGroup = this.dataset.bg;
+                renderDonors();
+                renderRequests();
+            });
+        });
+
+        // Locate me
+        document.getElementById('locateBtn').addEventListener('click', function () {
+            if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
+            this.disabled = true;
+            navigator.geolocation.getCurrentPosition(function (pos) {
+                var lat = pos.coords.latitude, lng = pos.coords.longitude;
+                meLayer.clearLayers();
+                L.circleMarker([lat, lng], {
+                    radius: 10, color: '#6610f2', fillColor: '#6610f2',
+                    fillOpacity: 0.9, weight: 3
+                }).addTo(meLayer).bindPopup('<strong>Your location</strong>').openPopup();
+                map.setView([lat, lng], 13);
+                document.getElementById('locateBtn').disabled = false;
+                document.getElementById('locateBtn').innerHTML = '<i class="fas fa-check me-1"></i>Showing your location';
+            }, function () {
+                document.getElementById('locateBtn').disabled = false;
+                alert('Could not get location.');
+            });
+        });
+
+        // SignalR: reload requests when a new one comes in
+        if (typeof signalR !== 'undefined') {
+            var conn = new signalR.HubConnectionBuilder()
+                .withUrl("/notificationHub").withAutomaticReconnect().build();
+            conn.on("NewBloodRequest", function () {
+                fetch('/api/MapData/requests').then(r => r.json()).then(function (data) {
+                    allRequests = data;
+                    renderRequests();
+                });
+            });
+            conn.start().catch(console.warn);
+        }
+    </script>
+}

@@ -1,0 +1,231 @@
+@model BloodDonationManagement.ViewModels.BloodSearchViewModel
+@{
+    ViewData["Title"] = "Search Blood Donors";
+    Layout = "~/Views/Shared/_MainLayout.cshtml";
+    ViewBag.ShowHero = false;
+}
+
+<div class="container py-4">
+    <div class="row mb-3">
+        <div class="col">
+            <h2><i class="fas fa-search text-danger me-2"></i>Find Blood Donors</h2>
+            <p class="text-muted mb-0">Search by blood group and location. Use compatibility mode to find all compatible donors.</p>
+        </div>
+    </div>
+
+    <!-- Search Form -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form asp-action="Index" method="get" id="searchForm">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Blood Group</label>
+                        <select asp-for="BloodGroup" asp-items="Model.BloodGroups" class="form-select">
+                            <option value="">Any group</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">District</label>
+                        <select asp-for="DistrictId" asp-items="Model.Districts" class="form-select" id="DistrictId">
+                            <option value="">All districts</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Thana</label>
+                        <select asp-for="ThanaId" asp-items="Model.Thanas" class="form-select" id="ThanaId">
+                            <option value="">All thanas</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-check mt-4 pt-1">
+                            <input asp-for="CompatibilitySearch" class="form-check-input" type="checkbox" id="compatCheck" />
+                            <label class="form-check-label fw-semibold" for="compatCheck">
+                                <i class="fas fa-dna text-info me-1"></i>Compatible donors
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="fas fa-search me-1"></i>Search
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Near Me Section -->
+                <div class="row mt-3 align-items-center">
+                    <div class="col-auto">
+                        <button type="button" id="nearMeBtn" class="btn btn-outline-primary">
+                            <i class="fas fa-location-arrow me-1"></i>Find Near Me
+                        </button>
+                        <input type="hidden" asp-for="UserLat" id="userLat" />
+                        <input type="hidden" asp-for="UserLng" id="userLng" />
+                    </div>
+                    <div class="col-md-3" id="radiusGroup" style="display:@(Model.UserLat.HasValue ? "block" : "none")">
+                        <label class="form-label small fw-semibold">Radius: <span id="radiusLabel">@Model.RadiusKm</span> km</label>
+                        <input type="range" name="radiusKm" min="5" max="100" step="5" value="@Model.RadiusKm"
+                               class="form-range" id="radiusSlider" />
+                    </div>
+                    @if (Model.UserLat.HasValue)
+                    {
+                        <div class="col-auto">
+                            <span class="badge bg-primary">
+                                <i class="fas fa-crosshairs me-1"></i>Near me: @Model.RadiusKm km radius
+                            </span>
+                        </div>
+                    }
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Compatibility info -->
+    @if (Model.CompatibilitySearch && !string.IsNullOrEmpty(Model.BloodGroup))
+    {
+        <div class="alert alert-info mb-3">
+            <i class="fas fa-info-circle me-2"></i>
+            Showing all donors compatible with <strong>@Model.BloodGroup</strong> recipients
+            (not just exact matches).
+        </div>
+    }
+
+    <!-- Results -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center pt-3">
+            <h5 class="mb-0">
+                Results
+                <span class="badge bg-secondary ms-2">@Model.ResultsWithDistance.Count found</span>
+            </h5>
+            @if (Model.ResultsWithDistance.Any())
+            {
+                <a asp-controller="Map" asp-action="Index" class="btn btn-sm btn-outline-info">
+                    <i class="fas fa-map-marked-alt me-1"></i>View on Map
+                </a>
+            }
+        </div>
+        <div class="card-body p-0">
+            @if (!Model.ResultsWithDistance.Any())
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No donors matched your search. Try broader filters or enable compatibility mode.</p>
+                    <a asp-controller="Donor" asp-action="Create" class="btn btn-outline-danger">
+                        <i class="fas fa-user-plus me-1"></i>Register as Donor
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Name</th>
+                                <th>Blood Group</th>
+                                <th>Location</th>
+                                <th>Contact</th>
+                                <th>Last Donation</th>
+                                @if (Model.UserLat.HasValue)
+                                {
+                                    <th>Distance</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.ResultsWithDistance)
+                            {
+                                var d = item.Donor;
+                                var eligible = !d.LastDonationDate.HasValue || d.LastDonationDate.Value <= DateTime.Today.AddDays(-90);
+                                <tr>
+                                    <td>
+                                        <strong>@d.FullName</strong>
+                                        @if (!eligible)
+                                        {
+                                            <span class="badge bg-secondary ms-1" title="Cannot donate for @((int)(d.LastDonationDate!.Value.AddDays(90) - DateTime.Today).TotalDays) more days">On cooldown</span>
+                                        }
+                                    </td>
+                                    <td><span class="badge bg-danger fs-6">@d.BloodGroup</span></td>
+                                    <td>
+                                        @(d.District?.Name ?? "-")
+                                        @if (d.Thana != null) { <br /><small class="text-muted">@d.Thana.Name</small> }
+                                    </td>
+                                    <td>
+                                        <a href="tel:@d.ContactNo" class="text-decoration-none">
+                                            <i class="fas fa-phone me-1 text-success"></i>@d.ContactNo
+                                        </a>
+                                    </td>
+                                    <td>
+                                        @if (d.LastDonationDate.HasValue)
+                                        {
+                                            <span class="@(eligible ? "text-success" : "text-muted")">
+                                                @d.LastDonationDate.Value.ToString("dd MMM yyyy")
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-success"><i class="fas fa-check me-1"></i>Ready</span>
+                                        }
+                                    </td>
+                                    @if (Model.UserLat.HasValue)
+                                    {
+                                        <td>
+                                            @if (item.DistanceKm.HasValue)
+                                            {
+                                                <span class="badge bg-info">@item.DistanceKm.Value.ToString("0.0") km</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">—</span>
+                                            }
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // District → Thana cascade
+        document.getElementById('DistrictId').addEventListener('change', function () {
+            var districtId = this.value;
+            var thanaSelect = document.getElementById('ThanaId');
+            thanaSelect.innerHTML = '<option value="">All thanas</option>';
+            if (!districtId) return;
+            fetch('/District/GetThanasByDistrict?districtId=' + districtId)
+                .then(r => r.json())
+                .then(data => data.forEach(item => {
+                    var opt = document.createElement('option');
+                    opt.value = item.value; opt.text = item.text;
+                    thanaSelect.appendChild(opt);
+                }));
+        });
+
+        // Radius slider label
+        document.getElementById('radiusSlider')?.addEventListener('input', function () {
+            document.getElementById('radiusLabel').textContent = this.value;
+        });
+
+        // Near Me
+        document.getElementById('nearMeBtn').addEventListener('click', function () {
+            if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Locating...';
+            navigator.geolocation.getCurrentPosition(function (pos) {
+                document.getElementById('userLat').value = pos.coords.latitude.toFixed(6);
+                document.getElementById('userLng').value = pos.coords.longitude.toFixed(6);
+                document.getElementById('radiusGroup').style.display = 'block';
+                document.getElementById('searchForm').submit();
+            }, function () {
+                alert('Unable to get location. Please allow location access.');
+                var btn = document.getElementById('nearMeBtn');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-location-arrow me-1"></i>Find Near Me';
+            });
+        });
+    </script>
+}
