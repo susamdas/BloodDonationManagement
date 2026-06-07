@@ -1,16 +1,15 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace BloodDonationManagement.Models
+namespace BloodDonationManagement.Models;
+
+public class District
 {
-    public class District
-    {
-        public int DistrictId { get; set; }
+    public int DistrictId { get; set; }
 
-        [Required]
-        public string Name { get; set; }
+    [Required]
+    public string Name { get; set; } = default!;
 
-        public ICollection<Thana> Thanas { get; set; }
-        public virtual ICollection<Donor> Donors { get; set; }
-    }
+    public ICollection<Thana> Thanas { get; set; } = new List<Thana>();
+    public ICollection<Donor> Donors { get; set; } = new List<Donor>();
 }

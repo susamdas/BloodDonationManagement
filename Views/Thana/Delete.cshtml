@@ -1,0 +1,26 @@
+@model BloodDonationManagement.Models.Thana
+@{
+    ViewData["Title"] = "Delete Thana";
+}
+
+<h1 class="mb-4">Delete Thana</h1>
+
+<div class="alert alert-warning">
+    <strong>Warning:</strong> Deleting this thana may affect donor and request records that reference it.
+</div>
+
+<div class="mb-3">
+    <h5>Name</h5>
+    <p>@Model.Name</p>
+</div>
+
+<div class="mb-3">
+    <h5>District</h5>
+    <p>@Model.District?.Name</p>
+</div>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="ThanaId" />
+    <button type="submit" class="btn btn-danger me-2">Delete</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>

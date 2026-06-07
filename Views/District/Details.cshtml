@@ -1,0 +1,30 @@
+@model BloodDonationManagement.Models.District
+@{
+    ViewData["Title"] = "District Details";
+}
+
+<h1 class="mb-4">District Details</h1>
+
+<div class="mb-3">
+    <h5>Name</h5>
+    <p>@Model.Name</p>
+</div>
+
+<div class="mb-4">
+    <h5>Thanas</h5>
+    @if (Model.Thanas?.Any() == true)
+    {
+        <ul class="list-group">
+            @foreach (var thana in Model.Thanas)
+            {
+                <li class="list-group-item">@thana.Name</li>
+            }
+        </ul>
+    }
+    else
+    {
+        <p class="text-muted">No thanas have been added for this district yet.</p>
+    }
+</div>
+
+<a asp-action="Index" class="btn btn-secondary">Back to Districts</a>

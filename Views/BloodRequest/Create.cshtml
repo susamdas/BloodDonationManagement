@@ -1,0 +1,206 @@
+@model BloodDonationManagement.Models.BloodRequest
+@{
+    ViewData["Title"] = "Request Blood";
+    Layout = "~/Views/Shared/_MainLayout.cshtml";
+    ViewBag.ShowHero = false;
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <!-- Urgency selector (visual, updates hidden field) -->
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-body">
+                    <h5 class="mb-3"><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Select Urgency Level</h5>
+                    <div class="row g-3" id="urgencyCards">
+                        <div class="col-4">
+                            <label class="urgency-card card text-center border-2 border-success rounded-3 p-3 cursor-pointer selected" data-value="0" style="cursor:pointer">
+                                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                <div class="fw-semibold">Normal</div>
+                                <small class="text-muted">Planned / Non-emergency</small>
+                            </label>
+                        </div>
+                        <div class="col-4">
+                            <label class="urgency-card card text-center border-2 border-warning rounded-3 p-3 cursor-pointer" data-value="1" style="cursor:pointer">
+                                <i class="fas fa-exclamation-circle fa-2x text-warning mb-2"></i>
+                                <div class="fw-semibold">Urgent</div>
+                                <small class="text-muted">Needed within 24 hours</small>
+                            </label>
+                        </div>
+                        <div class="col-4">
+                            <label class="urgency-card card text-center border-2 border-danger rounded-3 p-3 cursor-pointer" data-value="2" style="cursor:pointer">
+                                <i class="fas fa-skull-crossbones fa-2x text-danger mb-2"></i>
+                                <div class="fw-semibold">Critical</div>
+                                <small class="text-muted">Life-threatening emergency</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Form -->
+            <div class="card border-0 shadow-sm" id="requestCard">
+                <div class="card-header bg-danger text-white rounded-top" id="cardHeader">
+                    <h5 class="mb-0"><i class="fas fa-hand-holding-medical me-2"></i>Blood Request Details</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post" class="row g-3">
+                        <input asp-for="Urgency" type="hidden" id="urgencyInput" value="0" />
+
+                        <div class="col-md-6">
+                            <label asp-for="PatientName" class="form-label fw-semibold"></label>
+                            <input asp-for="PatientName" class="form-control" placeholder="Full patient name" />
+                            <span asp-validation-for="PatientName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="BloodGroup" class="form-label fw-semibold">Blood Group Needed *</label>
+                            <div class="d-flex flex-wrap gap-2" id="bgBtns">
+                                @foreach (var bg in new[] { "A+","A-","B+","B-","AB+","AB-","O+","O-" })
+                                {
+                                    <button type="button" class="btn btn-outline-danger btn-sm bg-btn fw-bold" data-bg="@bg">@bg</button>
+                                }
+                            </div>
+                            <input asp-for="BloodGroup" type="hidden" id="bloodGroupInput" />
+                            <span asp-validation-for="BloodGroup" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="DistrictId" class="form-label fw-semibold">District</label>
+                            <select asp-for="DistrictId" class="form-select"
+                                    asp-items="@(ViewData["DistrictId"] as Microsoft.AspNetCore.Mvc.Rendering.SelectList)" id="DistrictSel">
+                                <option value="">-- Select District --</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="ThanaId" class="form-label fw-semibold">Thana</label>
+                            <select asp-for="ThanaId" class="form-select"
+                                    asp-items="@(ViewData["ThanaId"] as Microsoft.AspNetCore.Mvc.Rendering.SelectList)" id="ThanaSel">
+                                <option value="">-- Select Thana --</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="ContactNo" class="form-label fw-semibold"></label>
+                            <div class="input-group">
+                                <span class="input-group-text">🇧🇩 +88</span>
+                                <input asp-for="ContactNo" class="form-control" placeholder="01XXXXXXXXX" />
+                            </div>
+                            <span asp-validation-for="ContactNo" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="HospitalName" class="form-label fw-semibold"></label>
+                            <input asp-for="HospitalName" class="form-control" placeholder="e.g. Dhaka Medical College Hospital" />
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="Message" class="form-label fw-semibold">Additional Message</label>
+                            <textarea asp-for="Message" class="form-control" rows="3"
+                                      placeholder="Any additional details about the patient or situation..."></textarea>
+                        </div>
+
+                        <!-- GPS Location -->
+                        <div class="col-12">
+                            <div class="d-flex align-items-center gap-3">
+                                <button type="button" id="gpsBtn" class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-location-arrow me-1"></i>Use GPS Location
+                                </button>
+                                <span id="gpsStatus" class="small text-muted"></span>
+                            </div>
+                            <div class="row mt-2" id="gpsFields" style="display:none!important">
+                                <div class="col-6">
+                                    <input asp-for="Latitude" class="form-control form-control-sm" readonly placeholder="Latitude" />
+                                </div>
+                                <div class="col-6">
+                                    <input asp-for="Longitude" class="form-control form-control-sm" readonly placeholder="Longitude" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger px-5" id="submitBtn">
+                                <i class="fas fa-paper-plane me-1"></i>Submit Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Urgency card selection
+        var urgencyColors = { 0: '#198754', 1: '#fd7e14', 2: '#dc3545' };
+        document.querySelectorAll('.urgency-card').forEach(function (card) {
+            card.addEventListener('click', function () {
+                document.querySelectorAll('.urgency-card').forEach(c => c.classList.remove('selected', 'bg-light'));
+                this.classList.add('selected', 'bg-light');
+                var val = parseInt(this.dataset.value);
+                document.getElementById('urgencyInput').value = val;
+                document.getElementById('cardHeader').style.background =
+                    'linear-gradient(135deg,' + urgencyColors[val] + ',' + urgencyColors[val] + 'cc)';
+            });
+        });
+
+        // Blood group button selection
+        document.querySelectorAll('.bg-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.bg-btn').forEach(b => b.classList.remove('btn-danger', 'active'));
+                document.querySelectorAll('.bg-btn').forEach(b => b.classList.add('btn-outline-danger'));
+                this.classList.remove('btn-outline-danger');
+                this.classList.add('btn-danger', 'active');
+                document.getElementById('bloodGroupInput').value = this.dataset.bg;
+            });
+        });
+
+        // Pre-select if model has value
+        var existingBg = '@Model.BloodGroup';
+        if (existingBg) {
+            document.querySelectorAll('.bg-btn').forEach(function (btn) {
+                if (btn.dataset.bg === existingBg) btn.click();
+            });
+        }
+
+        // District → Thana cascade
+        document.getElementById('DistrictSel').addEventListener('change', function () {
+            var id = this.value;
+            var sel = document.getElementById('ThanaSel');
+            sel.innerHTML = '<option value="">-- Select Thana --</option>';
+            if (!id) return;
+            fetch('/District/GetThanasByDistrict?districtId=' + id)
+                .then(r => r.json())
+                .then(data => data.forEach(item => {
+                    var opt = document.createElement('option');
+                    opt.value = item.value; opt.text = item.text;
+                    sel.appendChild(opt);
+                }));
+        });
+
+        // GPS
+        document.getElementById('gpsBtn').addEventListener('click', function () {
+            if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Getting location...';
+            navigator.geolocation.getCurrentPosition(function (pos) {
+                document.getElementById('Latitude').value = pos.coords.latitude.toFixed(6);
+                document.getElementById('Longitude').value = pos.coords.longitude.toFixed(6);
+                document.getElementById('gpsFields').style.removeProperty('display');
+                document.getElementById('gpsStatus').textContent = '✓ Location captured';
+                document.getElementById('gpsBtn').innerHTML = '<i class="fas fa-check me-1"></i>Location set';
+            }, function () {
+                document.getElementById('gpsBtn').disabled = false;
+                document.getElementById('gpsBtn').innerHTML = '<i class="fas fa-location-arrow me-1"></i>Use GPS Location';
+                document.getElementById('gpsStatus').textContent = 'Could not get location.';
+            });
+        });
+    </script>
+}

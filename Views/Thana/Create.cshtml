@@ -1,0 +1,29 @@
+@model BloodDonationManagement.Models.Thana
+@{
+    ViewData["Title"] = "Add Thana";
+}
+
+<h1 class="mb-4">Add Thana</h1>
+
+<form asp-action="Create" method="post">
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="DistrictId" class="form-label"></label>
+        <select asp-for="DistrictId" asp-items="ViewBag.DistrictId" class="form-select">
+            <option value="">-- Select District --</option>
+        </select>
+        <span asp-validation-for="DistrictId" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-danger me-2">Save</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

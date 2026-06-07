@@ -360,7 +360,7 @@
                 <label>জেলা</label>
                 <select class="form-control">
                     <option value="">সকল জেলা</option>
-                    @foreach (var district in Model.Where(d => d.District != null).Select(d => d.District.Name).Distinct().OrderBy(d => d))
+                    @foreach (var district in Model.Where(d => d.District != null).Select(d => d.District!.Name!).Distinct().OrderBy(d => d))
                     {
                         <option value="@district">@district</option>
                     }
@@ -440,12 +440,15 @@
                                     <a asp-action="Details" asp-route-id="@donor.DonorId" class="action-btn btn-view" title="বিস্তারিত দেখুন">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a asp-action="Edit" asp-route-id="@donor.DonorId" class="action-btn btn-edit" title="সম্পাদনা করুন">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a asp-action="Delete" asp-route-id="@donor.DonorId" class="action-btn btn-delete" title="মুছে ফেলুন" onclick="return confirm('আপনি কি নিশ্চিত এই ডোনারকে মুছে ফেলতে চান?')">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@donor.DonorId" class="action-btn btn-edit" title="সম্পাদনা করুন">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@donor.DonorId" class="action-btn btn-delete" title="মুছে ফেলুন" onclick="return confirm('আপনি কি নিশ্চিত এই ডোনারকে মুছে ফেলতে চান?')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    }
                                 </div>
                             </td>
                         </tr>

@@ -1,0 +1,96 @@
+@model BloodDonationManagement.Models.BloodRequest
+
+@{
+    ViewData["Title"] = "Edit Blood Request";
+    Layout = "~/Views/Shared/_MainLayout.cshtml";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h1 class="h4 mb-3">Edit Blood Request</h1>
+
+                    <form asp-action="Edit" method="post" class="row g-3 needs-validation" novalidate>
+                        <input asp-for="BloodRequestId" type="hidden" />
+
+                        <div class="col-md-6">
+                            <label asp-for="PatientName" class="form-label"></label>
+                            <input asp-for="PatientName" class="form-control" />
+                            <span asp-validation-for="PatientName" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="BloodGroup" class="form-label"></label>
+                            <input asp-for="BloodGroup" class="form-control" />
+                            <span asp-validation-for="BloodGroup" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="DistrictId" class="form-label"></label>
+                            <select asp-for="DistrictId" class="form-select" asp-items="@(ViewData["DistrictId"] as Microsoft.AspNetCore.Mvc.Rendering.SelectList)"></select>
+                            <span asp-validation-for="DistrictId" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="ThanaId" class="form-label"></label>
+                            <select asp-for="ThanaId" class="form-select" asp-items="@(ViewData["ThanaId"] as Microsoft.AspNetCore.Mvc.Rendering.SelectList)"></select>
+                            <span asp-validation-for="ThanaId" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="ContactNo" class="form-label"></label>
+                            <input asp-for="ContactNo" class="form-control" />
+                            <span asp-validation-for="ContactNo" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="Message" class="form-label"></label>
+                            <textarea asp-for="Message" class="form-control" rows="4"></textarea>
+                            <span asp-validation-for="Message" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Latitude" class="form-label"></label>
+                            <input asp-for="Latitude" class="form-control" readonly />
+                            <span asp-validation-for="Latitude" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Longitude" class="form-label"></label>
+                            <input asp-for="Longitude" class="form-control" readonly />
+                            <span asp-validation-for="Longitude" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-12 d-flex justify-content-between align-items-center">
+                            <button type="button" class="btn btn-outline-secondary" id="getLocationButton">Update Location</button>
+                            <div>
+                                <a asp-action="Index" class="btn btn-secondary me-2">Cancel</a>
+                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('getLocationButton').addEventListener('click', function () {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser.');
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(function (position) {
+                document.getElementById('Latitude').value = position.coords.latitude.toFixed(6);
+                document.getElementById('Longitude').value = position.coords.longitude.toFixed(6);
+            }, function () {
+                alert('Unable to fetch your location. Please allow location access or try again.');
+            });
+        });
+    </script>
+}

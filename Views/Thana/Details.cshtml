@@ -1,0 +1,18 @@
+@model BloodDonationManagement.Models.Thana
+@{
+    ViewData["Title"] = "Thana Details";
+}
+
+<h1 class="mb-4">Thana Details</h1>
+
+<div class="mb-3">
+    <h5>Name</h5>
+    <p>@Model.Name</p>
+</div>
+
+<div class="mb-3">
+    <h5>District</h5>
+    <p>@Model.District?.Name</p>
+</div>
+
+<a asp-action="Index" class="btn btn-secondary">Back to Thanas</a>

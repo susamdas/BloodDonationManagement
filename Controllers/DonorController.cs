@@ -1,5 +1,6 @@
 ﻿using BloodDonationManagement.Models;
 using BloodDonationManagement.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
@@ -37,6 +38,7 @@ namespace BloodDonationManagement.Controllers
         }
 
         // GET: Donor/Create
+        [Authorize]
         public IActionResult Create()
         {
             ViewData["DistrictId"] = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(_context.Districts, "DistrictId", "Name");
@@ -45,6 +47,7 @@ namespace BloodDonationManagement.Controllers
         }
 
         // POST: Donor/Create
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Donor donor)
@@ -61,6 +64,7 @@ namespace BloodDonationManagement.Controllers
         }
 
         // GET: Donor/Edit/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -74,6 +78,7 @@ namespace BloodDonationManagement.Controllers
         }
 
         // POST: Donor/Edit/5
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, Donor donor)
@@ -102,6 +107,7 @@ namespace BloodDonationManagement.Controllers
         }
 
         // GET: Donor/Delete/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -116,11 +122,16 @@ namespace BloodDonationManagement.Controllers
         }
 
         // POST: Donor/Delete/5
+        [Authorize(Roles = "Admin")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var donor = await _context.Donors.FindAsync(id);
+            if (donor == null)
+            {
+                return NotFound();
+            }
             _context.Donors.Remove(donor);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));

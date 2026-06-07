@@ -20,9 +20,21 @@ namespace BloodDonationManagement.Data
         {
             modelBuilder.Entity<Donor>()
                 .HasOne(d => d.Thana)
-                .WithMany()
+                .WithMany(t => t.Donors)
                 .HasForeignKey(d => d.ThanaId)
-                .OnDelete(DeleteBehavior.SetNull); // Cascade er bajaye SetNull
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Donor>()
+                .HasOne(d => d.District)
+                .WithMany(district => district.Donors)
+                .HasForeignKey(d => d.DistrictId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Thana>()
+                .HasOne(t => t.District)
+                .WithMany(district => district.Thanas)
+                .HasForeignKey(t => t.DistrictId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             base.OnModelCreating(modelBuilder);
         }

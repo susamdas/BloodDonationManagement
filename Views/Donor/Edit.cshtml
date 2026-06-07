@@ -34,6 +34,25 @@
     </div>
 
     <div class="form-group">
+        <button id="useLocationBtn" type="button" class="btn btn-outline-danger mb-3">
+            <i class="fas fa-location-arrow me-1"></i>Use my current location
+        </button>
+    </div>
+
+    <div class="form-row mb-3">
+        <div class="col-md-6">
+            <label asp-for="Latitude"></label>
+            <input asp-for="Latitude" class="form-control" readonly />
+            <span asp-validation-for="Latitude" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Longitude"></label>
+            <input asp-for="Longitude" class="form-control" readonly />
+            <span asp-validation-for="Longitude" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-group">
         <label asp-for="ContactNo"></label>
         <input asp-for="ContactNo" class="form-control" />
         <span asp-validation-for="ContactNo" class="text-danger"></span>
@@ -57,4 +76,30 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $('#useLocationBtn').click(function () {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser.');
+                return;
+            }
+
+            var btn = $(this);
+            btn.prop('disabled', true).text('Finding location...');
+
+            navigator.geolocation.getCurrentPosition(function (position) {
+                $('#Latitude').val(position.coords.latitude.toFixed(6));
+                $('#Longitude').val(position.coords.longitude.toFixed(6));
+                btn.text('Location found');
+            }, function (error) {
+                console.error(error);
+                alert('Unable to fetch location. Please allow browser location access.');
+                btn.prop('disabled', false).text('Use my current location');
+            }, {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            });
+        });
+    </script>
 }
