@@ -1,26 +1,40 @@
 @model BloodDonationManagement.Models.Thana
 @{
     ViewData["Title"] = "Delete Thana";
+    Layout = "~/Views/Shared/_MainLayout.cshtml";
+    ViewBag.ShowHero = false;
 }
 
-<h1 class="mb-4">Delete Thana</h1>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-danger text-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-trash me-2"></i>Delete Thana</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Deleting <strong>@Model.Name</strong> may affect donor records linked to it.
+                    </div>
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4 text-muted">Thana</dt>
+                        <dd class="col-sm-8 fw-semibold">@Model.Name</dd>
 
-<div class="alert alert-warning">
-    <strong>Warning:</strong> Deleting this thana may affect donor and request records that reference it.
+                        <dt class="col-sm-4 text-muted">District</dt>
+                        <dd class="col-sm-8">@(Model.District?.Name ?? "—")</dd>
+                    </dl>
+                </div>
+                <div class="card-footer bg-transparent d-flex gap-2">
+                    <form asp-action="Delete" method="post" class="d-inline">
+                        <input type="hidden" asp-for="ThanaId" />
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-1"></i>Yes, Delete
+                        </button>
+                    </form>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-
-<div class="mb-3">
-    <h5>Name</h5>
-    <p>@Model.Name</p>
-</div>
-
-<div class="mb-3">
-    <h5>District</h5>
-    <p>@Model.District?.Name</p>
-</div>
-
-<form asp-action="Delete" method="post">
-    <input type="hidden" asp-for="ThanaId" />
-    <button type="submit" class="btn btn-danger me-2">Delete</button>
-    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
-</form>

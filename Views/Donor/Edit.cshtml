@@ -1,105 +1,109 @@
-﻿@model BloodDonationManagement.Models.Donor
-
+@model BloodDonationManagement.Models.Donor
 @{
     ViewData["Title"] = "Edit Donor";
+    Layout = "~/Views/Shared/_MainLayout.cshtml";
+    ViewBag.ShowHero = false;
 }
 
-<h2>Edit Donor</h2>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-warning text-dark py-3">
+                    <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Edit Donor</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Edit" method="post">
+                        <input type="hidden" asp-for="DonorId" />
 
-<form asp-action="Edit" method="post">
-    <input type="hidden" asp-for="DonorId" />
+                        <div class="mb-3">
+                            <label asp-for="FullName" class="form-label fw-semibold"></label>
+                            <input asp-for="FullName" class="form-control" />
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
 
-    <!-- বাকি Create.cshtml এর মতো ফিল্ড গুলো এখানে থাকবে -->
+                        <div class="mb-3">
+                            <label asp-for="BloodGroup" class="form-label fw-semibold"></label>
+                            <input asp-for="BloodGroup" class="form-control" placeholder="e.g. A+, O-, AB+" />
+                            <span asp-validation-for="BloodGroup" class="text-danger small"></span>
+                        </div>
 
-    <div class="form-group">
-        <label asp-for="FullName"></label>
-        <input asp-for="FullName" class="form-control" />
-        <span asp-validation-for="FullName" class="text-danger"></span>
-    </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">District</label>
+                            <select asp-for="DistrictId" asp-items="ViewBag.DistrictId" class="form-select">
+                                <option value="">-- Select District --</option>
+                            </select>
+                        </div>
 
-    <div class="form-group">
-        <label asp-for="BloodGroup"></label>
-        <input asp-for="BloodGroup" class="form-control" />
-        <span asp-validation-for="BloodGroup" class="text-danger"></span>
-    </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Thana</label>
+                            <select asp-for="ThanaId" asp-items="ViewBag.ThanaId" class="form-select">
+                                <option value="">-- Select Thana --</option>
+                            </select>
+                        </div>
 
-    <div class="form-group">
-        <label>District</label>
-        <select asp-for="DistrictId" asp-items="ViewBag.DistrictId" class="form-select"></select>
-    </div>
+                        <div class="mb-3">
+                            <label asp-for="ContactNo" class="form-label fw-semibold"></label>
+                            <input asp-for="ContactNo" class="form-control" />
+                            <span asp-validation-for="ContactNo" class="text-danger small"></span>
+                        </div>
 
-    <div class="form-group">
-        <label>Thana</label>
-        <select asp-for="ThanaId" asp-items="ViewBag.ThanaId" class="form-select"></select>
-    </div>
+                        <div class="mb-3">
+                            <label asp-for="LastDonationDate" class="form-label fw-semibold"></label>
+                            <input asp-for="LastDonationDate" type="date" class="form-control" />
+                            <span asp-validation-for="LastDonationDate" class="text-danger small"></span>
+                        </div>
 
-    <div class="form-group">
-        <button id="useLocationBtn" type="button" class="btn btn-outline-danger mb-3">
-            <i class="fas fa-location-arrow me-1"></i>Use my current location
-        </button>
-    </div>
+                        <div class="mb-3">
+                            <button id="useLocationBtn" type="button" class="btn btn-outline-danger btn-sm">
+                                <i class="fas fa-location-arrow me-1"></i>Update my location
+                            </button>
+                        </div>
 
-    <div class="form-row mb-3">
-        <div class="col-md-6">
-            <label asp-for="Latitude"></label>
-            <input asp-for="Latitude" class="form-control" readonly />
-            <span asp-validation-for="Latitude" class="text-danger"></span>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="Latitude" class="form-label fw-semibold"></label>
+                                <input asp-for="Latitude" class="form-control" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Longitude" class="form-label fw-semibold"></label>
+                                <input asp-for="Longitude" class="form-control" readonly />
+                            </div>
+                        </div>
+
+                        <div class="mb-4 form-check form-switch">
+                            <input asp-for="Status" class="form-check-input" type="checkbox" role="switch" />
+                            <label asp-for="Status" class="form-check-label fw-semibold">Active Donor</label>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-save me-1"></i>Update
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-        <div class="col-md-6">
-            <label asp-for="Longitude"></label>
-            <input asp-for="Longitude" class="form-control" readonly />
-            <span asp-validation-for="Longitude" class="text-danger"></span>
-        </div>
     </div>
-
-    <div class="form-group">
-        <label asp-for="ContactNo"></label>
-        <input asp-for="ContactNo" class="form-control" />
-        <span asp-validation-for="ContactNo" class="text-danger"></span>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="LastDonationDate"></label>
-        <input asp-for="LastDonationDate" type="date" class="form-control" />
-        <span asp-validation-for="LastDonationDate" class="text-danger"></span>
-    </div>
-
-    <div class="form-check">
-        <input asp-for="Status" class="form-check-input" />
-        <label asp-for="Status" class="form-check-label"></label>
-    </div>
-
-    <br />
-    <button type="submit" class="btn btn-primary">Update</button>
-    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
-</form>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-
     <script>
-        $('#useLocationBtn').click(function () {
-            if (!navigator.geolocation) {
-                alert('Geolocation is not supported by your browser.');
-                return;
-            }
-
-            var btn = $(this);
-            btn.prop('disabled', true).text('Finding location...');
-
-            navigator.geolocation.getCurrentPosition(function (position) {
-                $('#Latitude').val(position.coords.latitude.toFixed(6));
-                $('#Longitude').val(position.coords.longitude.toFixed(6));
-                btn.text('Location found');
-            }, function (error) {
-                console.error(error);
-                alert('Unable to fetch location. Please allow browser location access.');
-                btn.prop('disabled', false).text('Use my current location');
-            }, {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
-            });
+        document.getElementById('useLocationBtn').addEventListener('click', function () {
+            if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
+            var btn = this;
+            btn.disabled = true; btn.textContent = 'Finding location...';
+            navigator.geolocation.getCurrentPosition(function (pos) {
+                document.getElementById('Latitude').value = pos.coords.latitude.toFixed(6);
+                document.getElementById('Longitude').value = pos.coords.longitude.toFixed(6);
+                btn.textContent = 'Location updated';
+            }, function () {
+                alert('Unable to fetch location. Allow browser location access.');
+                btn.disabled = false; btn.innerHTML = '<i class="fas fa-location-arrow me-1"></i>Update my location';
+            }, { enableHighAccuracy: true, timeout: 10000 });
         });
     </script>
 }

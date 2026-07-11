@@ -1,4 +1,5 @@
 using BloodDonationManagement.Data;
+using BloodDonationManagement.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -45,7 +46,7 @@ public class MapDataController : ControllerBase
         var requests = await _context.BloodRequests
             .Include(r => r.District)
             .Include(r => r.Thana)
-            .Where(r => r.Status == "Pending" && r.Latitude.HasValue && r.Longitude.HasValue)
+            .Where(r => r.Status == RequestStatus.Pending && r.Latitude.HasValue && r.Longitude.HasValue)
             .Select(r => new
             {
                 r.BloodRequestId,
@@ -77,7 +78,7 @@ public class MapDataController : ControllerBase
         {
             bloodGroupStats,
             totalDonors = await _context.Donors.CountAsync(d => d.Status),
-            pendingRequests = await _context.BloodRequests.CountAsync(r => r.Status == "Pending")
+            pendingRequests = await _context.BloodRequests.CountAsync(r => r.Status == RequestStatus.Pending)
         });
     }
 }

@@ -1,5 +1,6 @@
 using BloodDonationManagement.Data;
 using BloodDonationManagement.Hubs;
+using BloodDonationManagement.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,6 +28,7 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddSignalR();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 var app = builder.Build();
 
