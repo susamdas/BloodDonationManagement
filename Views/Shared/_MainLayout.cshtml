@@ -288,7 +288,14 @@
             showBloodToast(data);
         });
 
-        connection.start().catch(function (err) { console.warn("SignalR:", err); });
+        connection.start().then(function () {
+            // Join the district group stored in localStorage (set on BloodRequest/Create)
+            var districtId = localStorage.getItem('preferredDistrictId');
+            if (districtId) {
+                connection.invoke("JoinDistrictGroup", districtId)
+                    .catch(function (err) { console.warn("JoinDistrictGroup:", err); });
+            }
+        }).catch(function (err) { console.warn("SignalR:", err); });
 
         function showBloodToast(data) {
             var urgencyClass = data.urgency === 'Critical' ? 'critical' : (data.urgency === 'Urgent' ? 'urgent' : '');

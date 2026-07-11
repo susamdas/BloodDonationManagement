@@ -2,6 +2,7 @@
 using BloodDonationManagement.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
@@ -17,9 +18,45 @@ namespace BloodDonationManagement.Controllers
         }
 
         // GET: Donor
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? bloodGroup, int? districtId, string? status, int page = 1)
         {
-            var donors = await _context.Donors.Include(d => d.District).Include(d => d.Thana).ToListAsync();
+            const int pageSize = 20;
+
+            var query = _context.Donors
+                .Include(d => d.District)
+                .Include(d => d.Thana)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(bloodGroup))
+                query = query.Where(d => d.BloodGroup == bloodGroup);
+
+            if (districtId.HasValue)
+                query = query.Where(d => d.DistrictId == districtId);
+
+            if (status == "active")
+                query = query.Where(d => d.Status);
+            else if (status == "inactive")
+                query = query.Where(d => !d.Status);
+
+            var totalCount = await query.CountAsync();
+
+            var donors = await query
+                .OrderBy(d => d.FullName)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            ViewBag.BloodGroup = bloodGroup;
+            ViewBag.DistrictId = districtId;
+            ViewBag.Status = status;
+            ViewBag.Page = page;
+            ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+            ViewBag.TotalCount = totalCount;
+            ViewBag.ActiveCount = await query.CountAsync(d => d.Status);
+            ViewBag.InactiveCount = await query.CountAsync(d => !d.Status);
+            ViewBag.RecentCount = await query.CountAsync(d => d.LastDonationDate >= DateTime.Now.AddDays(-90));
+            ViewBag.Districts = new SelectList(_context.Districts.OrderBy(d => d.Name), "DistrictId", "Name", districtId);
+
             return View(donors);
         }
 

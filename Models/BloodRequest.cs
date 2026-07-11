@@ -10,6 +10,12 @@ public enum UrgencyLevel
     Critical = 2
 }
 
+public enum RequestStatus
+{
+    Pending = 0,
+    Fulfilled = 1
+}
+
 public class BloodRequest
 {
     public int BloodRequestId { get; set; }
@@ -44,8 +50,7 @@ public class BloodRequest
 
     public string Message { get; set; } = string.Empty;
 
-    [Required]
-    public string Status { get; set; } = "Pending";
+    public RequestStatus Status { get; set; } = RequestStatus.Pending;
 
     [Display(Name = "Urgency Level")]
     public UrgencyLevel Urgency { get; set; } = UrgencyLevel.Normal;

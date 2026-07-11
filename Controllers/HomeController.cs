@@ -1,4 +1,5 @@
 using BloodDonationManagement.Data;
+using BloodDonationManagement.Models;
 using BloodDonationManagement.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +22,7 @@ public class HomeController : Controller
 
         var recentRequests = await _context.BloodRequests
             .Include(r => r.District)
-            .Where(r => r.Status == "Pending")
+            .Where(r => r.Status == RequestStatus.Pending)
             .OrderByDescending(r => (int)r.Urgency)
             .ThenByDescending(r => r.CreatedDate)
             .Take(5)
@@ -32,8 +33,8 @@ public class HomeController : Controller
             TotalDonors = await _context.Donors.CountAsync(),
             ActiveDonors = await _context.Donors.CountAsync(d => d.Status),
             TotalRequests = await _context.BloodRequests.CountAsync(),
-            PendingRequests = await _context.BloodRequests.CountAsync(r => r.Status == "Pending"),
-            FulfilledRequests = await _context.BloodRequests.CountAsync(r => r.Status == "Fulfilled"),
+            PendingRequests = await _context.BloodRequests.CountAsync(r => r.Status == RequestStatus.Pending),
+            FulfilledRequests = await _context.BloodRequests.CountAsync(r => r.Status == RequestStatus.Fulfilled),
             DistrictCount = await _context.Districts.CountAsync(),
             ThanaCount = await _context.Thanas.CountAsync(),
             BloodGroupStats = bloodGroupStats,

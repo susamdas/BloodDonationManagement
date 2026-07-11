@@ -170,9 +170,11 @@
             });
         }
 
-        // District → Thana cascade
+        // District → Thana cascade + save preferred district for SignalR group
         document.getElementById('DistrictSel').addEventListener('change', function () {
             var id = this.value;
+            if (id) localStorage.setItem('preferredDistrictId', id);
+            else localStorage.removeItem('preferredDistrictId');
             var sel = document.getElementById('ThanaSel');
             sel.innerHTML = '<option value="">-- Select Thana --</option>';
             if (!id) return;

@@ -302,19 +302,19 @@
     <!-- Statistics -->
     <div class="donor-stats">
         <div class="stat-box">
-            <span class="stat-number">@Model.Count()</span>
+            <span class="stat-number">@ViewBag.TotalCount</span>
             <div class="stat-label">মোট ডোনার</div>
         </div>
         <div class="stat-box">
-            <span class="stat-number">@Model.Count(d => d.Status)</span>
+            <span class="stat-number">@ViewBag.ActiveCount</span>
             <div class="stat-label">সক্রিয় ডোনার</div>
         </div>
         <div class="stat-box">
-            <span class="stat-number">@Model.Count(d => !d.Status)</span>
+            <span class="stat-number">@ViewBag.InactiveCount</span>
             <div class="stat-label">নিষ্ক্রিয় ডোনার</div>
         </div>
         <div class="stat-box">
-            <span class="stat-number">@Model.Where(d => d.LastDonationDate.HasValue && d.LastDonationDate.Value >= DateTime.Now.AddDays(-90)).Count()</span>
+            <span class="stat-number">@ViewBag.RecentCount</span>
             <div class="stat-label">সাম্প্রতিক ডোনার</div>
         </div>
     </div>
@@ -340,49 +340,55 @@
     </div>
 
     <!-- Search Filters -->
-    <div class="search-filters">
-        <div class="filter-row">
-            <div class="form-group">
-                <label>রক্তের গ্রুপ</label>
-                <select class="form-control">
-                    <option value="">সকল গ্রুপ</option>
-                    <option value="A+">A+</option>
-                    <option value="A-">A-</option>
-                    <option value="B+">B+</option>
-                    <option value="B-">B-</option>
-                    <option value="AB+">AB+</option>
-                    <option value="AB-">AB-</option>
-                    <option value="O+">O+</option>
-                    <option value="O-">O-</option>
-                </select>
+    <form method="get" asp-action="Index">
+        <div class="search-filters">
+            <div class="filter-row">
+                <div class="form-group">
+                    <label>রক্তের গ্রুপ</label>
+                    <select name="bloodGroup" class="form-control">
+                        <option value="">সকল গ্রুপ</option>
+                        @foreach (var bg in new[] { "A+","A-","B+","B-","AB+","AB-","O+","O-" })
+                        {
+                            if (ViewBag.BloodGroup == bg) {
+                                <option value="@bg" selected>@bg</option>
+                            } else {
+                                <option value="@bg">@bg</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>জেলা</label>
+                    <select name="districtId" class="form-control" asp-items="ViewBag.Districts">
+                        <option value="">সকল জেলা</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>স্ট্যাটাস</label>
+                    <select name="status" class="form-control">
+                        <option value="">সকল স্ট্যাটাস</option>
+                        @if (ViewBag.Status == "active") { <option value="active" selected>সক্রিয়</option> } else { <option value="active">সক্রিয়</option> }
+                        @if (ViewBag.Status == "inactive") { <option value="inactive" selected>নিষ্ক্রিয়</option> } else { <option value="inactive">নিষ্ক্রিয়</option> }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>&nbsp;</label>
+                    <button type="submit" class="btn btn-primary form-control">
+                        <i class="fas fa-search"></i> অনুসন্ধান
+                    </button>
+                </div>
             </div>
-            <div class="form-group">
-                <label>জেলা</label>
-                <select class="form-control">
-                    <option value="">সকল জেলা</option>
-                    @foreach (var district in Model.Where(d => d.District != null).Select(d => d.District!.Name!).Distinct().OrderBy(d => d))
-                    {
-                        <option value="@district">@district</option>
-                    }
-                </select>
-            </div>
-            <div class="form-group">
-                <label>স্ট্যাটাস</label>
-                <select class="form-control">
-                    <option value="">সকল স্ট্যাটাস</option>
-                    <option value="true">সক্রিয়</option>
-                    <option value="false">নিষ্ক্রিয়</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>&nbsp;</label>
-                <button class="btn btn-primary form-control">
-                    <i class="fas fa-search"></i>
-                    অনুসন্ধান
-                </button>
-            </div>
+            @if (!string.IsNullOrEmpty(ViewBag.BloodGroup as string) || ViewBag.DistrictId != null || !string.IsNullOrEmpty(ViewBag.Status as string))
+            {
+                <div class="mt-2">
+                    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>ফিল্টার বাতিল করুন
+                    </a>
+                    <small class="text-muted ms-2">@ViewBag.TotalCount টি ফলাফল পাওয়া গেছে</small>
+                </div>
+            }
         </div>
-    </div>
+    </form>
 
     <!-- Donors Table -->
     <div class="donors-table-container">
@@ -470,22 +476,46 @@
         }
     </div>
 
-    <!-- Pagination (if needed) -->
-    <div class="pagination-container">
-        <!-- Add pagination controls here if implementing pagination -->
-    </div>
+    <!-- Pagination -->
+    @if (ViewBag.TotalPages > 1)
+    {
+        <div class="pagination-container mt-3">
+            <nav>
+                <ul class="pagination pagination-sm justify-content-center flex-wrap gap-1">
+                    <li class="page-item @(ViewBag.Page == 1 ? "disabled" : "")">
+                        <a class="page-link" asp-action="Index"
+                           asp-route-page="@(ViewBag.Page - 1)"
+                           asp-route-bloodGroup="@ViewBag.BloodGroup"
+                           asp-route-districtId="@ViewBag.DistrictId"
+                           asp-route-status="@ViewBag.Status">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    @for (int p = 1; p <= (int)ViewBag.TotalPages; p++)
+                    {
+                        <li class="page-item @(p == (int)ViewBag.Page ? "active" : "")">
+                            <a class="page-link" asp-action="Index"
+                               asp-route-page="@p"
+                               asp-route-bloodGroup="@ViewBag.BloodGroup"
+                               asp-route-districtId="@ViewBag.DistrictId"
+                               asp-route-status="@ViewBag.Status">@p</a>
+                        </li>
+                    }
+                    <li class="page-item @((int)ViewBag.Page == (int)ViewBag.TotalPages ? "disabled" : "")">
+                        <a class="page-link" asp-action="Index"
+                           asp-route-page="@(ViewBag.Page + 1)"
+                           asp-route-bloodGroup="@ViewBag.BloodGroup"
+                           asp-route-districtId="@ViewBag.DistrictId"
+                           asp-route-status="@ViewBag.Status">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <p class="text-center text-muted small">
+                পৃষ্ঠা @ViewBag.Page / @ViewBag.TotalPages
+                &nbsp;|&nbsp; মোট @ViewBag.TotalCount জন ডোনার
+            </p>
+        </div>
+    }
 </div>
-
-@section Scripts {
-    <script>
-        // Add any JavaScript for filtering, searching, etc.
-        document.addEventListener('DOMContentLoaded', function() {
-            // Simple client-side filtering (you can replace with server-side)
-            const filters = document.querySelectorAll('.search-filters select');
-            const searchBtn = document.querySelector('.search-filters button');
-
-            // Add event listeners for real-time filtering if needed
-            console.log('Donor management page loaded successfully');
-        });
-    </script>
-}

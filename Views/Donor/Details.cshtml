@@ -1,38 +1,74 @@
-﻿@model BloodDonationManagement.Models.Donor
-
+@model BloodDonationManagement.Models.Donor
 @{
     ViewData["Title"] = "Donor Details";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    Layout = "~/Views/Shared/_MainLayout.cshtml";
+    ViewBag.ShowHero = false;
 }
 
-<h2>Donor Details</h2>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-danger text-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-user me-2"></i>Donor Details</h5>
+                </div>
+                <div class="card-body p-4">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4 text-muted">Full Name</dt>
+                        <dd class="col-sm-8 fw-semibold">@Model.FullName</dd>
 
-<div>
-    <dl class="row">
-        <dt class="col-sm-2">Name</dt>
-        <dd class="col-sm-10">@Model.FullName</dd>
+                        <dt class="col-sm-4 text-muted">Blood Group</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge bg-danger fs-6 px-3">@Model.BloodGroup</span>
+                        </dd>
 
-        <dt class="col-sm-2">Blood Group</dt>
-        <dd class="col-sm-10">@Model.BloodGroup</dd>
+                        <dt class="col-sm-4 text-muted">District</dt>
+                        <dd class="col-sm-8">@(Model.District?.Name ?? "—")</dd>
 
-        <dt class="col-sm-2">District</dt>
-        <dd class="col-sm-10">@Model.District?.Name</dd>
+                        <dt class="col-sm-4 text-muted">Thana</dt>
+                        <dd class="col-sm-8">@(Model.Thana?.Name ?? "—")</dd>
 
-        <dt class="col-sm-2">Thana</dt>
-        <dd class="col-sm-10">@Model.Thana?.Name</dd>
+                        <dt class="col-sm-4 text-muted">Contact No</dt>
+                        <dd class="col-sm-8">
+                            <a href="tel:@Model.ContactNo" class="text-decoration-none">
+                                <i class="fas fa-phone me-1 text-success"></i>@Model.ContactNo
+                            </a>
+                        </dd>
 
-        <dt class="col-sm-2">Contact No</dt>
-        <dd class="col-sm-10">@Model.ContactNo</dd>
+                        <dt class="col-sm-4 text-muted">Last Donation</dt>
+                        <dd class="col-sm-8">
+                            @if (Model.LastDonationDate.HasValue)
+                            {
+                                <span class="@(Model.LastDonationDate.Value >= DateTime.Now.AddDays(-90) ? "text-warning" : "text-success")">
+                                    @Model.LastDonationDate.Value.ToString("dd MMM yyyy")
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Never donated</span>
+                            }
+                        </dd>
 
-        <dt class="col-sm-2">Last Donation Date</dt>
-        <dd class="col-sm-10">@Model.LastDonationDate?.ToString("dd-MM-yyyy")</dd>
-
-        <dt class="col-sm-2">Status</dt>
-        <dd class="col-sm-10">@(Model.Status ? "Active" : "Inactive")</dd>
-    </dl>
+                        <dt class="col-sm-4 text-muted">Status</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge @(Model.Status ? "bg-success" : "bg-secondary")">
+                                @(Model.Status ? "Active" : "Inactive")
+                            </span>
+                        </dd>
+                    </dl>
+                </div>
+                <div class="card-footer bg-transparent d-flex gap-2">
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a asp-action="Edit" asp-route-id="@Model.DonorId" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-edit me-1"></i>Edit
+                        </a>
+                    }
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-
-<p>
-    <a asp-action="Edit" asp-route-id="@Model.DonorId" class="btn btn-primary">Edit</a> |
-    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
-</p>

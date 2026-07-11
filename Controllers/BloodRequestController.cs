@@ -19,14 +19,26 @@ namespace BloodDonationManagement.Controllers
             _hub = hub;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1)
         {
-            var requests = await _context.BloodRequests
+            const int pageSize = 20;
+
+            var query = _context.BloodRequests
                 .Include(r => r.District)
                 .Include(r => r.Thana)
                 .OrderByDescending(r => r.Urgency)
-                .ThenByDescending(r => r.CreatedDate)
+                .ThenByDescending(r => r.CreatedDate);
+
+            var totalCount = await query.CountAsync();
+            var requests = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
+
+            ViewBag.Page = page;
+            ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+            ViewBag.TotalCount = totalCount;
+
             return View(requests);
         }
 
@@ -64,7 +76,7 @@ namespace BloodDonationManagement.Controllers
                     ? await _context.Districts.FindAsync(request.DistrictId.Value)
                     : null;
 
-                await _hub.Clients.All.SendAsync("NewBloodRequest", new
+                var payload = new
                 {
                     request.BloodRequestId,
                     request.BloodGroup,
@@ -72,7 +84,13 @@ namespace BloodDonationManagement.Controllers
                     District = district?.Name ?? "Unknown",
                     Urgency = request.Urgency.ToString(),
                     Hospital = request.HospitalName ?? ""
-                });
+                };
+
+                // Broadcast to the specific district group if district is set; fallback to all
+                if (request.DistrictId.HasValue)
+                    await _hub.Clients.Group($"district_{request.DistrictId.Value}").SendAsync("NewBloodRequest", payload);
+                else
+                    await _hub.Clients.All.SendAsync("NewBloodRequest", payload);
 
                 TempData["SuccessMessage"] = $"Blood request for {request.BloodGroup} submitted successfully!";
                 return RedirectToAction(nameof(Index));
@@ -156,7 +174,7 @@ namespace BloodDonationManagement.Controllers
             var request = await _context.BloodRequests.FindAsync(id);
             if (request != null)
             {
-                request.Status = "Fulfilled";
+                request.Status = RequestStatus.Fulfilled;
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = $"Blood request marked as fulfilled!";
             }

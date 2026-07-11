@@ -1,18 +1,38 @@
 @model BloodDonationManagement.Models.Thana
 @{
     ViewData["Title"] = "Thana Details";
+    Layout = "~/Views/Shared/_MainLayout.cshtml";
+    ViewBag.ShowHero = false;
 }
 
-<h1 class="mb-4">Thana Details</h1>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-danger text-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-building me-2"></i>Thana Details</h5>
+                </div>
+                <div class="card-body p-4">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4 text-muted">Thana</dt>
+                        <dd class="col-sm-8 fw-semibold">@Model.Name</dd>
 
-<div class="mb-3">
-    <h5>Name</h5>
-    <p>@Model.Name</p>
+                        <dt class="col-sm-4 text-muted">District</dt>
+                        <dd class="col-sm-8">@(Model.District?.Name ?? "—")</dd>
+                    </dl>
+                </div>
+                <div class="card-footer bg-transparent d-flex gap-2">
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a asp-action="Edit" asp-route-id="@Model.ThanaId" class="btn btn-outline-warning btn-sm">
+                            <i class="fas fa-edit me-1"></i>Edit
+                        </a>
+                    }
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-
-<div class="mb-3">
-    <h5>District</h5>
-    <p>@Model.District?.Name</p>
-</div>
-
-<a asp-action="Index" class="btn btn-secondary">Back to Thanas</a>
