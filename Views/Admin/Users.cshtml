@@ -1,0 +1,103 @@
+@model BloodDonationManagement.ViewModels.UsersViewModel
+@{
+    ViewData["Title"] = "User Management";
+    Layout = "~/Views/Shared/_MainLayout.cshtml";
+}
+
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
+        <div>
+            <h1 class="h3 mb-0"><i class="fas fa-users-cog text-danger me-2"></i>User Management</h1>
+            <div class="text-muted small">@Model.Users.Count account(s) · deactivated users cannot log in and are removed from donor matching</div>
+        </div>
+        <form method="get" class="d-flex gap-2">
+            <input name="search" value="@Model.Search" class="form-control form-control-sm" placeholder="Search email or phone" aria-label="Search users" />
+            <button class="btn btn-sm btn-danger"><i class="fas fa-search"></i></button>
+        </form>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Account</th>
+                        <th>Donor profile</th>
+                        <th class="text-center">Requests</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in Model.Users)
+                    {
+                        var isMe = u.Id == Model.CurrentUserId;
+                        <tr class="@(u.IsActive ? "" : "table-secondary")">
+                            <td>
+                                <div class="fw-semibold">@u.Email @if (isMe) { <span class="badge bg-light text-dark border">you</span> }</div>
+                                @if (!string.IsNullOrEmpty(u.Phone)) { <div class="small text-muted">@u.Phone</div> }
+                            </td>
+                            <td>
+                                @if (u.Donor != null)
+                                {
+                                    <a asp-controller="Donor" asp-action="Details" asp-route-id="@u.Donor.DonorId" class="text-decoration-none">
+                                        <span class="bg-badge sm me-1">@u.Donor.BloodGroup</span>@u.Donor.FullName
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">—</span>
+                                }
+                            </td>
+                            <td class="text-center">@u.Requests</td>
+                            <td>
+                                @if (u.IsAdmin)
+                                {
+                                    <span class="badge bg-danger"><i class="fas fa-user-shield me-1"></i>Admin</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-dark border">User</span>
+                                }
+                            </td>
+                            <td>
+                                @if (u.IsActive)
+                                {
+                                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary"><i class="fas fa-ban me-1"></i>Deactivated</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                @if (!isMe)
+                                {
+                                    <div class="d-inline-flex gap-1">
+                                        <form asp-action="ToggleActive" method="post"
+                                              onsubmit="return confirm('@(u.IsActive ? "Deactivate" : "Re-activate") @u.Email?');">
+                                            <input type="hidden" name="id" value="@u.Id" />
+                                            <button class="btn btn-sm @(u.IsActive ? "btn-outline-secondary" : "btn-success")">
+                                                @(u.IsActive ? "Deactivate" : "Activate")
+                                            </button>
+                                        </form>
+                                        <form asp-action="ToggleAdmin" method="post"
+                                              onsubmit="return confirm('@(u.IsAdmin ? "Remove admin role from" : "Make admin:") @u.Email?');">
+                                            <input type="hidden" name="id" value="@u.Id" />
+                                            <button class="btn btn-sm btn-outline-danger">@(u.IsAdmin ? "Remove admin" : "Make admin")</button>
+                                        </form>
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Users.Any())
+                    {
+                        <tr><td colspan="6" class="text-center text-muted py-4">No users found.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

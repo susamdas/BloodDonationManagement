@@ -1,4 +1,6 @@
 ﻿@model IEnumerable<BloodDonationManagement.Models.Donor>
+@using BloodDonationManagement.Services
+@inject EligibilityService Eligibility
 @{
     ViewData["Title"] = "ডোনার তালিকা - রক্তদান ব্যবস্থাপনা";
     Layout = "~/Views/Shared/_MainLayout.cshtml";
@@ -420,14 +422,23 @@
                             <td>@(donor.District?.Name ?? "N/A")</td>
                             <td>@(donor.Thana?.Name ?? "N/A")</td>
                             <td>
-                                <a href="tel:@donor.ContactNo" class="text-decoration-none">
-                                    <i class="fas fa-phone"></i> @donor.ContactNo
-                                </a>
+                                @if (ViewBag.ShowContacts == true)
+                                {
+                                    <a href="tel:@donor.ContactNo" class="text-decoration-none">
+                                        <i class="fas fa-phone"></i> @donor.ContactNo
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted" title="নম্বরটি গোপন রাখা হয়েছে — দাতা অনুরোধ গ্রহণ করলে দেখা যাবে">
+                                        <i class="fas fa-lock"></i> @PrivacyHelper.MaskPhone(donor.ContactNo)
+                                    </span>
+                                }
                             </td>
                             <td>
                                 @if (donor.LastDonationDate.HasValue)
                                 {
-                                    <span class="@(donor.LastDonationDate.Value >= DateTime.Now.AddDays(-90) ? "text-success" : "text-muted")">
+                                    <span class="text-muted">
                                         @donor.LastDonationDate.Value.ToString("dd-MM-yyyy")
                                     </span>
                                 }
@@ -437,9 +448,23 @@
                                 }
                             </td>
                             <td>
-                                <span class="status-badge @(donor.Status ? "status-active" : "status-inactive")">
-                                    @(donor.Status ? "সক্রিয়" : "নিষ্ক্রিয়")
-                                </span>
+                                @{ var elig = Eligibility.Evaluate(donor); }
+                                @if (!donor.Status)
+                                {
+                                    <span class="status-badge status-inactive">নিষ্ক্রিয়</span>
+                                }
+                                else if (!donor.IsAvailable)
+                                {
+                                    <span class="status-badge status-inactive" title="Alerts paused">বিরতিতে</span>
+                                }
+                                else if (!elig.IsEligible)
+                                {
+                                    <span class="badge bg-warning text-dark" title="Can donate again on @elig.NextEligibleDate?.ToString("dd MMM yyyy")">বিশ্রামে (@elig.DaysRemaining দিন)</span>
+                                }
+                                else
+                                {
+                                    <span class="status-badge status-active">দানে সক্ষম</span>
+                                }
                             </td>
                             <td>
                                 <div class="action-buttons">

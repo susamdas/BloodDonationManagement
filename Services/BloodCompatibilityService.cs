@@ -14,6 +14,9 @@ public static class BloodCompatibilityService
         ["O-"]  = ["O-"],
     };
 
+    public static bool IsValidGroup(string? group) =>
+        group != null && _compatibleDonors.ContainsKey(group.Trim());
+
     public static string[] GetCompatibleDonorGroups(string recipientGroup) =>
         _compatibleDonors.TryGetValue(recipientGroup, out var groups) ? groups : [recipientGroup];
 

@@ -22,7 +22,7 @@ public class HomeController : Controller
 
         var recentRequests = await _context.BloodRequests
             .Include(r => r.District)
-            .Where(r => r.Status == RequestStatus.Pending)
+            .Where(r => r.Status == RequestStatus.Pending || r.Status == RequestStatus.DonorMatched)
             .OrderByDescending(r => (int)r.Urgency)
             .ThenByDescending(r => r.CreatedDate)
             .Take(5)
@@ -33,7 +33,7 @@ public class HomeController : Controller
             TotalDonors = await _context.Donors.CountAsync(),
             ActiveDonors = await _context.Donors.CountAsync(d => d.Status),
             TotalRequests = await _context.BloodRequests.CountAsync(),
-            PendingRequests = await _context.BloodRequests.CountAsync(r => r.Status == RequestStatus.Pending),
+            PendingRequests = await _context.BloodRequests.CountAsync(r => r.Status == RequestStatus.Pending || r.Status == RequestStatus.DonorMatched),
             FulfilledRequests = await _context.BloodRequests.CountAsync(r => r.Status == RequestStatus.Fulfilled),
             DistrictCount = await _context.Districts.CountAsync(),
             ThanaCount = await _context.Thanas.CountAsync(),

@@ -12,149 +12,165 @@ build_property.EntryPointFilePath =
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = BloodDonationManagement
 build_property.RootNamespace = BloodDonationManagement
-build_property.ProjectDir = C:\Users\Asus\source\repos\susamdas\BloodDonationManagement\
+build_property.ProjectDir = E:\My file\Project\BloodDonationManagement\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.RazorLangVersion = 8.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = 
-build_property.MSBuildProjectDirectory = C:\Users\Asus\source\repos\susamdas\BloodDonationManagement
+build_property.MSBuildProjectDirectory = E:\My file\Project\BloodDonationManagement
 build_property._RazorSourceGeneratorDebug = 
 build_property.EffectiveAnalysisLevelStyle = 8.0
 build_property.EnableCodeStyleSeverity = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Areas/Identity/Pages/Account/Login.cshtml]
+[E:/My file/Project/BloodDonationManagement/Areas/Identity/Pages/Account/Login.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSWRlbnRpdHlcUGFnZXNcQWNjb3VudFxMb2dpbi5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Areas/Identity/Pages/Account/Register.cshtml]
+[E:/My file/Project/BloodDonationManagement/Areas/Identity/Pages/Account/Register.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSWRlbnRpdHlcUGFnZXNcQWNjb3VudFxSZWdpc3Rlci5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Areas/Identity/Pages/Shared/_ValidationScriptsPartial.cshtml]
+[E:/My file/Project/BloodDonationManagement/Areas/Identity/Pages/Shared/_ValidationScriptsPartial.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSWRlbnRpdHlcUGFnZXNcU2hhcmVkXF9WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Areas/Identity/Pages/_ViewImports.cshtml]
+[E:/My file/Project/BloodDonationManagement/Areas/Identity/Pages/_ViewImports.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSWRlbnRpdHlcUGFnZXNcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Areas/Identity/Pages/_ViewStart.cshtml]
+[E:/My file/Project/BloodDonationManagement/Areas/Identity/Pages/_ViewStart.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSWRlbnRpdHlcUGFnZXNcX1ZpZXdTdGFydC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/BloodRequest/Create.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/Admin/Dashboard.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cRGFzaGJvYXJkLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/My file/Project/BloodDonationManagement/Views/Admin/Reports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cUmVwb3J0cy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/My file/Project/BloodDonationManagement/Views/Admin/Users.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cVXNlcnMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/My file/Project/BloodDonationManagement/Views/BloodRequest/Create.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQmxvb2RSZXF1ZXN0XENyZWF0ZS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/BloodRequest/Delete.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/BloodRequest/Delete.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQmxvb2RSZXF1ZXN0XERlbGV0ZS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/BloodRequest/Details.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/BloodRequest/Details.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQmxvb2RSZXF1ZXN0XERldGFpbHMuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/BloodRequest/Edit.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/BloodRequest/Edit.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQmxvb2RSZXF1ZXN0XEVkaXQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/BloodRequest/Index.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/BloodRequest/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQmxvb2RSZXF1ZXN0XEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/BloodSearch/Index.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/BloodSearch/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQmxvb2RTZWFyY2hcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/District/Create.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/District/Create.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGlzdHJpY3RcQ3JlYXRlLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/District/Delete.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/District/Delete.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGlzdHJpY3RcRGVsZXRlLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/District/Details.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/District/Details.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGlzdHJpY3RcRGV0YWlscy5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/District/Edit.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/District/Edit.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGlzdHJpY3RcRWRpdC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/District/Index.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/District/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGlzdHJpY3RcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/Donor/Create.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/Donor/Create.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRG9ub3JcQ3JlYXRlLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/Donor/Delete.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/Donor/Delete.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRG9ub3JcRGVsZXRlLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/Donor/Details.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/Donor/Details.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRG9ub3JcRGV0YWlscy5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/Donor/Edit.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/Donor/Edit.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRG9ub3JcRWRpdC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/Donor/Index.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/Donor/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRG9ub3JcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/Home/Index.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/Donor/MyProfile.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRG9ub3JcTXlQcm9maWxlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/My file/Project/BloodDonationManagement/Views/Home/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/Home/Privacy.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/Home/Privacy.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQcml2YWN5LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/Map/Index.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/Map/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWFwXEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/Shared/_Layout.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/Shared/_Layout.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/Shared/_MainLayout.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/Shared/_MainLayout.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9NYWluTGF5b3V0LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/Shared/_ValidationScriptsPartial.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/Shared/_ValidationScriptsPartial.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/Thana/Create.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/Thana/Create.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVGhhbmFcQ3JlYXRlLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/Thana/Delete.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/Thana/Delete.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVGhhbmFcRGVsZXRlLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/Thana/Details.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/Thana/Details.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVGhhbmFcRGV0YWlscy5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/Thana/Edit.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/Thana/Edit.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVGhhbmFcRWRpdC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/Thana/Index.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/Thana/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVGhhbmFcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/_Layout.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/_Layout.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX0xheW91dC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Asus/source/repos/susamdas/BloodDonationManagement/Views/_ViewImports.cshtml]
+[E:/My file/Project/BloodDonationManagement/Views/_ViewImports.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 

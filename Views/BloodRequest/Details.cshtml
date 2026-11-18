@@ -1,49 +1,525 @@
-@model BloodDonationManagement.Models.BloodRequest
-
+@model BloodDonationManagement.ViewModels.RequestDetailsViewModel
+@using BloodDonationManagement.Services
 @{
     ViewData["Title"] = "Blood Request Details";
     Layout = "~/Views/Shared/_MainLayout.cshtml";
+    var r = Model.Request;
+    var urgencyCss = r.Urgency == UrgencyLevel.Critical ? "danger" : r.Urgency == UrgencyLevel.Urgent ? "warning" : "success";
+    var statusCss = r.Status switch
+    {
+        RequestStatus.Pending => "secondary",
+        RequestStatus.DonorMatched => "info",
+        RequestStatus.Fulfilled => "success",
+        RequestStatus.Cancelled => "dark",
+        _ => "dark"
+    };
+    var statusText = r.Status == RequestStatus.DonorMatched ? "Donor Matched" : r.Status.ToString();
+    var unitsPct = r.UnitsNeeded == 0 ? 0 : Math.Min(100, Model.ConfirmedUnits * 100 / r.UnitsNeeded);
+    var accepted = Model.Responses.Where(x => x.Status is ResponseStatus.Accepted or ResponseStatus.Confirmed).ToList();
+
+    string ResponseBadge(ResponseStatus? s) => s switch
+    {
+        ResponseStatus.Notified => "<span class='badge bg-light text-dark border'><i class='fas fa-bell me-1'></i>Notified</span>",
+        ResponseStatus.Accepted => "<span class='badge bg-success'><i class='fas fa-check me-1'></i>Accepted</span>",
+        ResponseStatus.Declined => "<span class='badge bg-secondary'><i class='fas fa-times me-1'></i>Declined</span>",
+        ResponseStatus.Confirmed => "<span class='badge bg-primary'><i class='fas fa-heart me-1'></i>Donated</span>",
+        _ => ""
+    };
 }
 
 <div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-xl-8">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h1 class="h4 mb-4">Request Details</h1>
 
-                    <dl class="row mb-4">
-                        <dt class="col-sm-4">Patient Name</dt>
-                        <dd class="col-sm-8">@Model.PatientName</dd>
-
-                        <dt class="col-sm-4">Blood Group</dt>
-                        <dd class="col-sm-8">@Model.BloodGroup</dd>
-
-                        <dt class="col-sm-4">District</dt>
-                        <dd class="col-sm-8">@Model.District?.Name</dd>
-
-                        <dt class="col-sm-4">Thana</dt>
-                        <dd class="col-sm-8">@Model.Thana?.Name</dd>
-
-                        <dt class="col-sm-4">Contact Number</dt>
-                        <dd class="col-sm-8">@Model.ContactNo</dd>
-
-                        <dt class="col-sm-4">Message</dt>
-                        <dd class="col-sm-8">@Model.Message</dd>
-
-                        <dt class="col-sm-4">Location</dt>
-                        <dd class="col-sm-8">Latitude: @Model.Latitude, Longitude: @Model.Longitude</dd>
-
-                        <dt class="col-sm-4">Status</dt>
-                        <dd class="col-sm-8">@Model.Status</dd>
-                    </dl>
-
-                    <div class="d-flex justify-content-end">
-                        <a asp-action="Edit" asp-route-id="@Model.BloodRequestId" class="btn btn-outline-primary me-2">Edit</a>
-                        <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+    <!-- ================= Header ================= -->
+    <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+        <div class="request-hero bg-@urgencyCss bg-gradient text-white p-4">
+            <div class="d-flex flex-wrap align-items-center gap-4">
+                <div class="blood-group-big">@r.BloodGroup</div>
+                <div class="flex-grow-1">
+                    <div class="mb-1">
+                        <span class="badge bg-white text-@urgencyCss me-1"><i class="fas fa-bolt me-1"></i>@r.Urgency</span>
+                        <span class="badge bg-@statusCss border border-white me-1">@statusText</span>
+                        @if (r.IsVerified)
+                        {
+                            <span class="badge bg-white text-primary"><i class="fas fa-check-circle me-1"></i>Verified</span>
+                        }
+                        @if (DonorMatchingService.IsRareGroup(r.BloodGroup))
+                        {
+                            <span class="badge bg-dark"><i class="fas fa-gem me-1"></i>Rare group</span>
+                        }
                     </div>
+                    <h1 class="h3 mb-1">@r.PatientName</h1>
+                    <div class="opacity-75">
+                        <i class="fas fa-hospital me-1"></i>@(r.HospitalName ?? "Hospital not specified")
+                        @if (r.District != null)
+                        {
+                            <span class="ms-2"><i class="fas fa-map-marker-alt me-1"></i>@r.Thana?.Name@(r.Thana != null ? ", " : "")@r.District.Name</span>
+                        }
+                    </div>
+                </div>
+                <div class="text-md-end">
+                    <div class="small opacity-75">Units received</div>
+                    <div class="h3 mb-1">@Model.ConfirmedUnits / @r.UnitsNeeded</div>
+                    <div class="progress bg-white bg-opacity-25" style="height:8px;width:160px">
+                        <div class="progress-bar bg-white" style="width:@unitsPct%"></div>
+                    </div>
+                    @if (r.NeededBy.HasValue && r.IsOpen)
+                    {
+                        <div class="small mt-2" data-countdown="@r.NeededBy.Value.ToString("o")">
+                            <i class="fas fa-hourglass-half me-1"></i><span>Needed by @r.NeededBy.Value.ToString("dd MMM, hh:mm tt")</span>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
+        <div class="safety-strip px-4 py-2 small">
+            <i class="fas fa-shield-alt me-2"></i><strong>Blood is free.</strong>
+            Never pay or ask for money for blood. Report anyone who asks for payment.
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- ================= Left column ================= -->
+        <div class="col-lg-4">
+
+            <!-- Donor action panel -->
+            @if (r.IsOpen)
+            {
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <h2 class="h6 text-uppercase text-muted mb-3"><i class="fas fa-hand-holding-heart me-2"></i>Can you help?</h2>
+                        @if (!Model.IsAuthenticated)
+                        {
+                            <p class="mb-3">Log in with your donor account to respond to this request.</p>
+                            <a class="btn btn-danger w-100" href="@Url.Page("/Account/Login", new { area = "Identity", returnUrl = Context.Request.Path })">
+                                <i class="fas fa-sign-in-alt me-1"></i>Login to respond
+                            </a>
+                        }
+                        else if (Model.MyDonor == null)
+                        {
+                            <p class="mb-3">Create your donor profile to respond to requests.</p>
+                            <a asp-controller="Donor" asp-action="Create" class="btn btn-danger w-100"><i class="fas fa-user-plus me-1"></i>Become a donor</a>
+                        }
+                        else if (!Model.MyGroupCompatible)
+                        {
+                            <div class="alert alert-secondary mb-0">
+                                Your blood group <b>@Model.MyDonor.BloodGroup</b> is not compatible with <b>@r.BloodGroup</b>. Thank you for checking!
+                            </div>
+                        }
+                        else if (Model.MyResponse?.Status == ResponseStatus.Confirmed)
+                        {
+                            <div class="alert alert-primary mb-0"><i class="fas fa-heart me-1"></i>Your donation for this request is confirmed. Thank you, lifesaver!</div>
+                        }
+                        else if (!(Model.MyEligibility?.IsEligible ?? false))
+                        {
+                            <div class="alert alert-warning mb-0">
+                                <i class="fas fa-clock me-1"></i>You are in your rest period.
+                                You can donate again on <b>@Model.MyEligibility?.NextEligibleDate?.ToString("dd MMM yyyy")</b>
+                                (@Model.MyEligibility?.DaysRemaining days).
+                            </div>
+                        }
+                        else
+                        {
+                            @if (Model.MyResponse?.Status == ResponseStatus.Accepted)
+                            {
+                                <div class="alert alert-success"><i class="fas fa-check-circle me-1"></i>You accepted. The requester can now see your number and will contact you.</div>
+                            }
+                            else if (Model.MyResponse?.Status == ResponseStatus.Declined)
+                            {
+                                <div class="alert alert-secondary">You declined this request. Changed your mind?</div>
+                            }
+                            else if (Model.MyResponse?.Status == ResponseStatus.Notified)
+                            {
+                                <div class="alert alert-info"><i class="fas fa-bell me-1"></i>You were selected as a <b>@Model.MyResponse.MatchScore.ToString("0")% match</b> for this request.</div>
+                            }
+                            <div class="d-flex gap-2">
+                                @if (Model.MyResponse?.Status != ResponseStatus.Accepted)
+                                {
+                                    <form asp-action="Respond" method="post" class="flex-fill">
+                                        <input type="hidden" name="id" value="@r.BloodRequestId" />
+                                        <input type="hidden" name="accept" value="true" />
+                                        <button class="btn btn-success w-100"><i class="fas fa-hand-holding-heart me-1"></i>I can donate</button>
+                                    </form>
+                                }
+                                @if (Model.MyResponse?.Status != ResponseStatus.Declined)
+                                {
+                                    <form asp-action="Respond" method="post" class="flex-fill">
+                                        <input type="hidden" name="id" value="@r.BloodRequestId" />
+                                        <input type="hidden" name="accept" value="false" />
+                                        <button class="btn btn-outline-secondary w-100"><i class="fas fa-times me-1"></i>Can't this time</button>
+                                    </form>
+                                }
+                            </div>
+                            <div class="small text-muted mt-2"><i class="fas fa-lock me-1"></i>Your number is shared with the requester only if you accept.</div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Request information -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h6 text-uppercase text-muted mb-3"><i class="fas fa-info-circle me-2"></i>Request information</h2>
+                    <dl class="row small mb-0">
+                        <dt class="col-5">Contact</dt>
+                        <dd class="col-7">
+                            @if (Model.IsAuthenticated)
+                            {
+                                <a href="tel:@r.ContactNo">@r.ContactNo</a>
+                            }
+                            else
+                            {
+                                @PrivacyHelper.MaskPhone(r.ContactNo) <span class="text-muted">(login to view)</span>
+                            }
+                        </dd>
+                        <dt class="col-5">Units needed</dt>
+                        <dd class="col-7">@r.UnitsNeeded</dd>
+                        <dt class="col-5">Needed by</dt>
+                        <dd class="col-7">@(r.NeededBy?.ToString("dd MMM yyyy, hh:mm tt") ?? "As soon as possible")</dd>
+                        <dt class="col-5">Posted</dt>
+                        <dd class="col-7">@r.CreatedDate.ToString("dd MMM yyyy, hh:mm tt")</dd>
+                        @if (!string.IsNullOrWhiteSpace(r.Message))
+                        {
+                            <dt class="col-12 mt-2">Message</dt>
+                            <dd class="col-12 fst-italic">"@r.Message"</dd>
+                        }
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Timeline -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h6 text-uppercase text-muted mb-3"><i class="fas fa-stream me-2"></i>Timeline</h2>
+                    <ul class="timeline list-unstyled mb-0">
+                        @foreach (var t in Model.Timeline)
+                        {
+                            <li class="@t.Css">
+                                <div class="tl-dot"><i class="fas @t.Icon"></i></div>
+                                <div>
+                                    <div class="fw-semibold small">@t.Title</div>
+                                    @if (!string.IsNullOrEmpty(t.Detail))
+                                    {
+                                        <div class="small text-muted">@t.Detail</div>
+                                    }
+                                    <div class="tl-time">@t.At.ToString("dd MMM, hh:mm tt")</div>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Manage -->
+            @if (Model.CanManage)
+            {
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body d-grid gap-2">
+                        <h2 class="h6 text-uppercase text-muted mb-1"><i class="fas fa-cog me-2"></i>Manage request</h2>
+                        @if (Model.IsAdmin)
+                        {
+                            <form asp-action="ToggleVerified" method="post">
+                                <input type="hidden" name="id" value="@r.BloodRequestId" />
+                                <button class="btn btn-outline-primary w-100">
+                                    <i class="fas fa-check-circle me-1"></i>@(r.IsVerified ? "Remove verification" : "Mark as verified")
+                                </button>
+                            </form>
+                            <a asp-action="Edit" asp-route-id="@r.BloodRequestId" class="btn btn-outline-secondary"><i class="fas fa-edit me-1"></i>Edit</a>
+                        }
+                        @if (r.IsOpen)
+                        {
+                            <form asp-action="Cancel" method="post" onsubmit="return confirm('Cancel this request?');">
+                                <input type="hidden" name="id" value="@r.BloodRequestId" />
+                                <button class="btn btn-outline-danger w-100"><i class="fas fa-ban me-1"></i>Cancel request</button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            }
+            @if (Model.IsAdmin && Model.OpenReports > 0)
+            {
+                <div class="alert alert-danger small">
+                    <i class="fas fa-flag me-1"></i>This request has <b>@Model.OpenReports</b> open report(s).
+                    <a asp-controller="Admin" asp-action="Reports" class="alert-link">Review</a>
+                </div>
+            }
+            @if (Model.IsAuthenticated && !Model.IsOwner)
+            {
+                @if (Model.AlreadyReported)
+                {
+                    <div class="small text-muted mb-2"><i class="fas fa-flag me-1"></i>You reported this request. An admin is reviewing it.</div>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-link btn-sm text-danger px-0 mb-2" data-bs-toggle="modal" data-bs-target="#reportModal">
+                        <i class="fas fa-flag me-1"></i>Report this request (fake, asking for money…)
+                    </button>
+                }
+            }
+            <a asp-action="Index" class="btn btn-link px-0 d-block"><i class="fas fa-arrow-left me-1"></i>Back to all requests</a>
+        </div>
+
+        <!-- ================= Right column ================= -->
+        <div class="col-lg-8">
+
+            @if (Model.CanManage)
+            {
+                <!-- Donors who accepted: contact revealed -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3"><i class="fas fa-user-check text-success me-2"></i>Donors who said yes <span class="badge bg-success">@accepted.Count</span></h2>
+                        @if (!accepted.Any())
+                        {
+                            <p class="text-muted mb-0">No donor has accepted yet. Matched donors have been alerted — you will be notified the moment someone accepts.</p>
+                        }
+                        else
+                        {
+                            <div class="list-group list-group-flush">
+                                @foreach (var a in accepted)
+                                {
+                                    <div class="list-group-item px-0 d-flex flex-wrap align-items-center gap-3">
+                                        <div class="bg-badge">@a.Donor?.BloodGroup</div>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-semibold">@a.Donor?.FullName @Html.Raw(ResponseBadge(a.Status))</div>
+                                            <div class="small">
+                                                <a href="tel:@a.Donor?.ContactNo" class="text-decoration-none"><i class="fas fa-phone me-1 text-success"></i>@a.Donor?.ContactNo</a>
+                                                @if (a.DistanceKm.HasValue)
+                                                {
+                                                    <span class="text-muted ms-2"><i class="fas fa-location-dot me-1"></i>@a.DistanceKm.Value.ToString("0.0") km</span>
+                                                }
+                                                <span class="text-muted ms-2">Match @a.MatchScore.ToString("0")%</span>
+                                            </div>
+                                        </div>
+                                        @if (a.Status == ResponseStatus.Accepted && r.IsOpen)
+                                        {
+                                            <form asp-action="ConfirmDonation" method="post">
+                                                <input type="hidden" name="id" value="@r.BloodRequestId" />
+                                                <input type="hidden" name="donorId" value="@a.DonorId" />
+                                                <button class="btn btn-sm btn-primary"><i class="fas fa-heart me-1"></i>Confirm donation</button>
+                                            </form>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (Model.Match != null)
+            {
+                var m = Model.Match;
+                <!-- Smart Matching -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+                            <div>
+                                <h2 class="h5 mb-1"><i class="fas fa-wand-magic-sparkles text-danger me-2"></i>Smart Donor Matching</h2>
+                                <div class="small text-muted">Ranked by compatibility, distance, readiness and reliability</div>
+                            </div>
+                            <form asp-action="NotifyNext" method="post">
+                                <input type="hidden" name="id" value="@r.BloodRequestId" />
+                                <button class="btn btn-sm btn-danger" @(m.Matches.Any(x => x.CurrentResponse == null) ? "" : "disabled")>
+                                    <i class="fas fa-bullhorn me-1"></i>Notify next wave
+                                </button>
+                            </form>
+                        </div>
+
+                        @if (r.Latitude.HasValue && r.Longitude.HasValue)
+                        {
+                            <div id="matchMap" class="rounded border mb-3" style="height:300px"></div>
+                        }
+
+                        <!-- Funnel: why donors were included / excluded -->
+                        <div class="match-funnel mb-3">
+                            <div><span>@m.Considered</span>active donors</div>
+                            <div class="minus"><span>−@m.ExcludedIncompatible</span>incompatible</div>
+                            <div class="minus"><span>−@m.ExcludedOnCooldown</span>resting (cooldown)</div>
+                            <div class="minus"><span>−@m.ExcludedUnavailable</span>paused alerts</div>
+                            <div class="minus"><span>−@m.ExcludedTooFar</span>outside @m.RadiusKm.ToString("0") km</div>
+                            <div class="result"><span>@m.Matches.Count</span>matched</div>
+                        </div>
+                        @if (m.RadiusExpanded)
+                        {
+                            <div class="alert alert-warning py-2 small"><i class="fas fa-expand me-1"></i>Few donors nearby — search radius was automatically widened to <b>@m.RadiusKm.ToString("0") km</b>.</div>
+                        }
+
+                        @if (!m.Matches.Any())
+                        {
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-user-slash fa-2x mb-2"></i>
+                                <p class="mb-0">No eligible donors found right now. Try adding the hospital location on the map, or share the request.</p>
+                            </div>
+                        }
+
+                        @{ var rank = 0; }
+                        @foreach (var d in m.Matches.Take(25))
+                        {
+                            rank++;
+                            <div class="match-card @(rank <= 3 ? "top" : "")">
+                                <div class="match-rank">#@rank</div>
+                                <div class="score-ring" style="--p:@d.Score.ToString("0", System.Globalization.CultureInfo.InvariantCulture)" title="Match score">
+                                    <span>@d.Score.ToString("0")<small>%</small></span>
+                                </div>
+                                <div class="flex-grow-1 min-w-0">
+                                    <div class="d-flex flex-wrap align-items-center gap-2">
+                                        <span class="bg-badge sm">@d.Donor.BloodGroup</span>
+                                        <span class="fw-semibold">@d.Donor.FullName</span>
+                                        <span class="text-muted small"><i class="fas fa-phone me-1"></i>@PrivacyHelper.MaskPhone(d.Donor.ContactNo)</span>
+                                        @Html.Raw(ResponseBadge(d.CurrentResponse))
+                                    </div>
+                                    <div class="chips mt-1">
+                                        @foreach (var c in d.Chips)
+                                        {
+                                            <span class="chip @c.Css"><i class="fas @c.Icon me-1"></i>@c.Text</span>
+                                        }
+                                    </div>
+                                    <div class="factor-bars mt-2">
+                                        <div title="Compatibility (35%)"><label>Blood</label><div><i style="width:@((d.Compatibility * 100).ToString("0"))%"></i></div></div>
+                                        <div title="Proximity (30%)"><label>Distance</label><div><i style="width:@((d.Proximity * 100).ToString("0"))%"></i></div></div>
+                                        <div title="Readiness (20%)"><label>Readiness</label><div><i style="width:@((d.Readiness * 100).ToString("0"))%"></i></div></div>
+                                        <div title="Reliability (15%)"><label>Reliability</label><div><i style="width:@((d.Reliability * 100).ToString("0"))%"></i></div></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    @if (d.CurrentResponse == null)
+                                    {
+                                        <form asp-action="Notify" method="post">
+                                            <input type="hidden" name="id" value="@r.BloodRequestId" />
+                                            <input type="hidden" name="donorId" value="@d.Donor.DonorId" />
+                                            <button class="btn btn-sm btn-outline-danger"><i class="fas fa-bell me-1"></i>Notify</button>
+                                        </form>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        @if (m.Matches.Count > 25)
+                        {
+                            <div class="text-center small text-muted mt-2">Showing top 25 of @m.Matches.Count matched donors.</div>
+                        }
+                        <div class="small text-muted mt-3">
+                            <i class="fas fa-calculator me-1"></i>
+                            Match score = 35% blood compatibility + 30% proximity + 20% readiness + 15% reliability.
+                            Phone numbers stay hidden until a donor accepts.
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (!Model.CanManage)
+            {
+                <!-- Public view: summary only -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3"><i class="fas fa-users text-danger me-2"></i>Donor response</h2>
+                        <div class="row text-center g-3">
+                            <div class="col-4"><div class="h3 mb-0">@Model.Responses.Count</div><div class="small text-muted">donors alerted</div></div>
+                            <div class="col-4"><div class="h3 mb-0 text-success">@accepted.Count</div><div class="small text-muted">said yes</div></div>
+                            <div class="col-4"><div class="h3 mb-0 text-primary">@Model.ConfirmedUnits</div><div class="small text-muted">donated</div></div>
+                        </div>
+                        <p class="small text-muted mt-3 mb-0"><i class="fas fa-lock me-1"></i>Donor identities and phone numbers are private and visible only to the requester after a donor accepts.</p>
+                    </div>
+                </div>
+            }
+
+            @if (Model.CanManage && Model.Responses.Any(x => x.Status is ResponseStatus.Notified or ResponseStatus.Declined))
+            {
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h2 class="h6 text-uppercase text-muted mb-3"><i class="fas fa-paper-plane me-2"></i>Alert status</h2>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var x in Model.Responses.Where(x => x.Status is ResponseStatus.Notified or ResponseStatus.Declined))
+                            {
+                                <span class="border rounded-pill px-3 py-1 small">
+                                    @x.Donor?.FullName · @x.Donor?.BloodGroup @Html.Raw(ResponseBadge(x.Status))
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
     </div>
 </div>
+
+<!-- Report modal -->
+<div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form asp-action="Report" method="post" class="modal-content">
+            <input type="hidden" name="id" value="@r.BloodRequestId" />
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="reportTitle"><i class="fas fa-flag text-danger me-2"></i>Report this request</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted">Reports are private. An admin will review this request and can remove it.</p>
+                @foreach (var reason in BloodDonationManagement.Controllers.BloodRequestController.ReportReasons)
+                {
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="reason" id="rr-@reason.GetHashCode()" value="@reason" required />
+                        <label class="form-check-label" for="rr-@reason.GetHashCode()">@reason</label>
+                    </div>
+                }
+                <label for="reportDetails" class="form-label mt-3 small">Details (optional)</label>
+                <textarea id="reportDetails" name="details" class="form-control" rows="3" maxlength="500"
+                          placeholder="e.g. The caller asked me to send money via bKash"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-danger"><i class="fas fa-flag me-1"></i>Submit report</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @if (Model.Match != null && r.Latitude.HasValue && r.Longitude.HasValue)
+    {
+        var mapDonors = Model.Match.Matches.Take(25)
+            .Where(x => x.Donor.Latitude.HasValue && x.Donor.Longitude.HasValue)
+            .Select((x, i) => new
+            {
+                rank = i + 1,
+                group = x.Donor.BloodGroup,
+                name = x.Donor.FullName,
+                score = Math.Round(x.Score),
+                lat = PrivacyHelper.Approximate(x.Donor.Latitude),
+                lng = PrivacyHelper.Approximate(x.Donor.Longitude),
+                status = x.CurrentResponse?.ToString() ?? ""
+            });
+        <script src="~/js/mapkit.js" asp-append-version="true"></script>
+        <script>
+            (function () {
+                var hospital = [@r.Latitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture), @r.Longitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)];
+                var radiusKm = @Model.Match.RadiusKm.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                var donors = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(mapDonors));
+                MapKit.create('matchMap', { center: hospital, zoom: 12 }).then(function (map) {
+                    map.circle(hospital[0], hospital[1], radiusKm, { color: '#dc3545' });
+                    map.marker(hospital[0], hospital[1], { color: '#dc3545', size: 15, label: 'H', zIndex: 30, html: '<b>@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(r.HospitalName ?? "Hospital"))</b>' });
+                    var pts = [hospital];
+                    donors.forEach(function (d) {
+                        var color = d.status === 'Accepted' || d.status === 'Confirmed' ? '#198754' : (d.rank <= 3 ? '#2a78d6' : '#86b6ef');
+                        map.marker(d.lat, d.lng, {
+                            color: color, label: '#' + d.rank, size: 12, zIndex: 40 - d.rank,
+                            html: '<b>#' + d.rank + ' ' + MapKit.esc(d.name) + '</b><br>' + MapKit.esc(d.group) + ' · ' + d.score + '% match' + (d.status ? '<br>' + MapKit.esc(d.status) : '')
+                        });
+                        pts.push([d.lat, d.lng]);
+                    });
+                    map.fit(pts);
+                });
+            })();
+        </script>
+    }
+    <script>
+        // Live countdown to the "needed by" time
+        document.querySelectorAll('[data-countdown]').forEach(function (el) {
+            var target = new Date(el.getAttribute('data-countdown'));
+            var span = el.querySelector('span');
+            function tick() {
+                var diff = target - new Date();
+                if (diff <= 0) { span.textContent = 'Time passed'; return; }
+                var h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000);
+                span.textContent = (h >= 48 ? Math.floor(h / 24) + ' days ' : h + 'h ' + m + 'm ') + 'left';
+            }
+            tick(); setInterval(tick, 30000);
+        });
+    </script>
+}

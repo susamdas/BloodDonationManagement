@@ -61,7 +61,7 @@ public class LoginModel : PageModel
         if (result.IsLockedOut)
         {
             _logger.LogWarning("User account locked out.");
-            ModelState.AddModelError(string.Empty, "This account is locked out.");
+            ModelState.AddModelError(string.Empty, "This account is locked or has been deactivated by an administrator.");
             return Page();
         }
 

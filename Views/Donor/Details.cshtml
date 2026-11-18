@@ -1,4 +1,4 @@
-@model BloodDonationManagement.Models.Donor
+﻿@model BloodDonationManagement.Models.Donor
 @{
     ViewData["Title"] = "Donor Details";
     Layout = "~/Views/Shared/_MainLayout.cshtml";
@@ -30,16 +30,24 @@
 
                         <dt class="col-sm-4 text-muted">Contact No</dt>
                         <dd class="col-sm-8">
-                            <a href="tel:@Model.ContactNo" class="text-decoration-none">
-                                <i class="fas fa-phone me-1 text-success"></i>@Model.ContactNo
-                            </a>
+                            @if (ViewBag.ShowContact == true)
+                            {
+                                <a href="tel:@Model.ContactNo" class="text-decoration-none">
+                                    <i class="fas fa-phone me-1 text-success"></i>@Model.ContactNo
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="text-muted"><i class="fas fa-lock me-1"></i>@BloodDonationManagement.Services.PrivacyHelper.MaskPhone(Model.ContactNo)</span>
+                                <div class="small text-muted">Shared only when the donor accepts a request.</div>
+                            }
                         </dd>
 
                         <dt class="col-sm-4 text-muted">Last Donation</dt>
                         <dd class="col-sm-8">
                             @if (Model.LastDonationDate.HasValue)
                             {
-                                <span class="@(Model.LastDonationDate.Value >= DateTime.Now.AddDays(-90) ? "text-warning" : "text-success")">
+                                <span>
                                     @Model.LastDonationDate.Value.ToString("dd MMM yyyy")
                                 </span>
                             }
@@ -49,16 +57,33 @@
                             }
                         </dd>
 
-                        <dt class="col-sm-4 text-muted">Status</dt>
+                        <dt class="col-sm-4 text-muted">Gender</dt>
+                        <dd class="col-sm-8">@Model.Gender</dd>
+
+                        <dt class="col-sm-4 text-muted">Eligibility</dt>
                         <dd class="col-sm-8">
-                            <span class="badge @(Model.Status ? "bg-success" : "bg-secondary")">
-                                @(Model.Status ? "Active" : "Inactive")
-                            </span>
+                            @{ var elig = (BloodDonationManagement.Services.EligibilityInfo)ViewBag.Eligibility; }
+                            @if (!Model.Status)
+                            {
+                                <span class="badge bg-secondary">Inactive account</span>
+                            }
+                            else if (!Model.IsAvailable)
+                            {
+                                <span class="badge bg-secondary">Alerts paused</span>
+                            }
+                            else if (elig.IsEligible)
+                            {
+                                <span class="badge bg-success"><i class="fas fa-heart-pulse me-1"></i>Eligible to donate</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">Resting — eligible on @elig.NextEligibleDate?.ToString("dd MMM yyyy") (@elig.DaysRemaining days)</span>
+                            }
                         </dd>
                     </dl>
                 </div>
                 <div class="card-footer bg-transparent d-flex gap-2">
-                    @if (User.IsInRole("Admin"))
+                    @if (ViewBag.CanEdit == true)
                     {
                         <a asp-action="Edit" asp-route-id="@Model.DonorId" class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-edit me-1"></i>Edit
