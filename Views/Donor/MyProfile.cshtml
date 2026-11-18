@@ -1,4 +1,4 @@
-@model BloodDonationManagement.ViewModels.MyDonorProfileViewModel
+﻿@model BloodDonationManagement.ViewModels.MyDonorProfileViewModel
 @{
     ViewData["Title"] = "My Donor Profile";
     Layout = "~/Views/Shared/_MainLayout.cshtml";
@@ -103,7 +103,7 @@
                                    class="list-group-item list-group-item-action px-0 d-flex align-items-center gap-3">
                                     <div class="bg-badge">@br.BloodGroup</div>
                                     <div class="flex-grow-1">
-                                        <div class="fw-semibold">@(br.HospitalName ?? br.PatientName)</div>
+                                        <div class="fw-semibold">@(br.HospitalName ?? $"Blood request #{br.BloodRequestId}")</div>
                                         <div class="small text-muted">@br.Urgency · @br.District?.Name · You are a @p.MatchScore.ToString("0")% match</div>
                                     </div>
                                     <span class="btn btn-sm btn-danger">Respond</span>
@@ -160,7 +160,7 @@
                                     {
                                         <tr>
                                             <td class="small">@x.NotifiedAt.ToString("dd MMM")</td>
-                                            <td class="small"><a asp-controller="BloodRequest" asp-action="Details" asp-route-id="@x.BloodRequestId">@x.BloodRequest?.BloodGroup · @(x.BloodRequest?.HospitalName ?? x.BloodRequest?.PatientName)</a></td>
+                                            <td class="small"><a asp-controller="BloodRequest" asp-action="Details" asp-route-id="@x.BloodRequestId">@x.BloodRequest?.BloodGroup · @(x.BloodRequest?.HospitalName ?? $"Request #{x.BloodRequestId}")</a></td>
                                             <td class="small">@x.MatchScore.ToString("0")%</td>
                                             <td class="small">@x.Status</td>
                                         </tr>

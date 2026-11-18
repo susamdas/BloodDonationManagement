@@ -18,15 +18,22 @@ public class AdminController : Controller
     private readonly UserManager<IdentityUser> _userManager;
     private readonly EligibilityService _eligibility;
     private readonly NotificationService _notifications;
+    private readonly AuditService _audit;
+    private readonly IConfiguration _config;
 
     public AdminController(ApplicationDbContext context, UserManager<IdentityUser> userManager,
-                           EligibilityService eligibility, NotificationService notifications)
+                           EligibilityService eligibility, NotificationService notifications,
+                           AuditService audit, IConfiguration config)
     {
         _context = context;
         _userManager = userManager;
         _eligibility = eligibility;
         _notifications = notifications;
+        _audit = audit;
+        _config = config;
     }
+
+    private int MaxAdmins => Math.Max(1, _config.GetValue("MaxAdmins", 2));
 
     public IActionResult Index() => RedirectToAction(nameof(Dashboard));
 
@@ -59,20 +66,7 @@ public class AdminController : Controller
         vm.FulfilmentRate = decided == 0 ? 0 : (int)Math.Round(100.0 * vm.FulfilledRequests / decided);
 
         // Average time from request creation to the first donor saying yes (key performance metric)
-        var firstAccepts = requests
-            .Select(r => new
-            {
-                r.CreatedDate,
-                First = r.Responses
-                    .Where(x => x.RespondedAt.HasValue && (x.Status == ResponseStatus.Accepted || x.Status == ResponseStatus.Confirmed))
-                    .Select(x => x.RespondedAt!.Value)
-                    .DefaultIfEmpty()
-                    .Min()
-            })
-            .Where(x => x.First != default && x.First >= x.CreatedDate)
-            .Select(x => (x.First - x.CreatedDate).TotalMinutes)
-            .ToList();
-        vm.AvgMinutesToFirstAccept = firstAccepts.Count == 0 ? null : Math.Round(firstAccepts.Average(), 1);
+        vm.AvgMinutesToFirstAccept = StatsHelper.AvgMinutesToFirstAccept(requests);
 
         var allResponses = requests.SelectMany(r => r.Responses).ToList();
         var answered = allResponses.Count;
@@ -145,6 +139,9 @@ public class AdminController : Controller
             .Select(g => new { g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.Key, x => x.Count);
 
+        ViewBag.MaxAdmins = MaxAdmins;
+        ViewBag.AdminCount = admins.Count;
+
         var vm = new UsersViewModel
         {
             Search = search,
@@ -188,6 +185,9 @@ public class AdminController : Controller
             await _context.SaveChangesAsync();
         }
 
+        await _audit.LogAsync(deactivate ? AuditActions.UserDeactivated : AuditActions.UserActivated, "User", user.Email,
+            deactivate ? $"Deactivated {user.Email} (login blocked, removed from matching)" : $"Re-activated {user.Email}");
+
         TempData["SuccessMessage"] = deactivate ? $"{user.Email} has been deactivated." : $"{user.Email} has been re-activated.";
         return RedirectToAction(nameof(Users));
     }
@@ -204,14 +204,27 @@ public class AdminController : Controller
         var user = await _userManager.FindByIdAsync(id);
         if (user == null) return NotFound();
 
+        var admins = await _userManager.GetUsersInRoleAsync("Admin");
         if (await _userManager.IsInRoleAsync(user, "Admin"))
         {
+            if (admins.Count <= 1)
+            {
+                TempData["ErrorMessage"] = "The platform must always have at least one admin.";
+                return RedirectToAction(nameof(Users));
+            }
             await _userManager.RemoveFromRoleAsync(user, "Admin");
+            await _audit.LogAsync(AuditActions.AdminRevoked, "User", user.Email, $"Removed admin role from {user.Email}");
             TempData["SuccessMessage"] = $"{user.Email} is no longer an admin.";
         }
         else
         {
+            if (admins.Count >= MaxAdmins)
+            {
+                TempData["ErrorMessage"] = $"This platform allows at most {MaxAdmins} admins. Remove an admin first.";
+                return RedirectToAction(nameof(Users));
+            }
             await _userManager.AddToRoleAsync(user, "Admin");
+            await _audit.LogAsync(AuditActions.AdminGranted, "User", user.Email, $"Granted admin role to {user.Email}");
             TempData["SuccessMessage"] = $"{user.Email} is now an admin.";
         }
         await _userManager.UpdateSecurityStampAsync(user);
@@ -264,20 +277,51 @@ public class AdminController : Controller
                 await _notifications.NotifyAsync(request.RequesterUserId, "Your request was removed",
                     "An administrator closed your blood request after reviewing user reports. Contact support if this is a mistake.",
                     Url.Action("Details", "BloodRequest", new { id = request.BloodRequestId }), "warning");
+                await _audit.LogAsync(AuditActions.ReportRemoved, "Request", request.BloodRequestId,
+                    $"Closed request #{request.BloodRequestId} ({request.BloodGroup}) after {related.Count} report(s)");
                 TempData["SuccessMessage"] = "Request closed and reports resolved.";
                 break;
             case "verify":
                 request.IsVerified = true;
                 related.ForEach(r => r.Status = ReportStatus.Dismissed);
                 await _context.SaveChangesAsync();
+                await _audit.LogAsync(AuditActions.ReportVerified, "Request", request.BloodRequestId,
+                    $"Verified request #{request.BloodRequestId} as genuine; dismissed {related.Count} report(s)");
                 TempData["SuccessMessage"] = "Request verified as genuine; reports dismissed.";
                 break;
             default:
                 related.ForEach(r => r.Status = ReportStatus.Dismissed);
                 await _context.SaveChangesAsync();
+                await _audit.LogAsync(AuditActions.ReportDismissed, "Request", request.BloodRequestId,
+                    $"Dismissed {related.Count} report(s) on request #{request.BloodRequestId}");
                 TempData["SuccessMessage"] = "Reports dismissed.";
                 break;
         }
         return RedirectToAction(nameof(Reports));
+    }
+
+    // ================================================================== Audit trail
+
+    public async Task<IActionResult> Audit(string? who, string? type, string? scope, DateTime? from, DateTime? to, int page = 1)
+    {
+        const int pageSize = 50;
+        var query = _context.AuditLogs.AsNoTracking().AsQueryable();
+
+        if (scope == "admin") query = query.Where(a => a.ActorIsAdmin);
+        else if (scope == "community") query = query.Where(a => !a.ActorIsAdmin);
+        if (!string.IsNullOrWhiteSpace(who)) query = query.Where(a => a.ActorEmail.Contains(who));
+        if (!string.IsNullOrWhiteSpace(type)) query = query.Where(a => a.Action.StartsWith(type));
+        if (from.HasValue) query = query.Where(a => a.At >= from.Value.Date);
+        if (to.HasValue) query = query.Where(a => a.At < to.Value.Date.AddDays(1));
+
+        var total = await query.CountAsync();
+        var items = await query.OrderByDescending(a => a.At)
+            .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+        ViewBag.Who = who; ViewBag.ActionFilter = type; ViewBag.Scope = scope;
+        ViewBag.From = from?.ToString("yyyy-MM-dd"); ViewBag.To = to?.ToString("yyyy-MM-dd");
+        ViewBag.Page = page; ViewBag.TotalPages = (int)Math.Ceiling(total / (double)pageSize); ViewBag.Total = total;
+        ViewBag.AdminActionsToday = await _context.AuditLogs.CountAsync(a => a.ActorIsAdmin && a.At >= DateTime.Today);
+        return View(items);
     }
 }

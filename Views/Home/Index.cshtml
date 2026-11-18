@@ -1,196 +1,313 @@
 @model BloodDonationManagement.ViewModels.DashboardViewModel
+@using BloodDonationManagement.Services
 @{
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Home";
     Layout = "~/Views/Shared/_MainLayout.cshtml";
-    var allGroups = new[] { "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-" };
-    var maxStat = Model.BloodGroupStats.Values.DefaultIfEmpty(1).Max();
+    var groups = new[] { "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-" };
+    var firstCritical = Model.UrgentRequests.FirstOrDefault(r => r.Urgency == UrgencyLevel.Critical);
 }
 
-<div class="container py-4">
+<div class="container-fluid px-3 px-lg-4 home-page">
 
-    <!-- Stats Cards -->
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <p class="text-muted small mb-1">Total Donors</p>
-                            <h2 class="fw-bold text-danger mb-0">@Model.TotalDonors</h2>
-                            <small class="text-success"><i class="fas fa-check-circle me-1"></i>@Model.ActiveDonors active</small>
-                        </div>
-                        <div class="bg-danger bg-opacity-10 rounded-3 p-2">
-                            <i class="fas fa-users fa-lg text-danger"></i>
-                        </div>
-                    </div>
-                </div>
+    <!-- ============================================================ 1. NEEDS RIGHT NOW (first) -->
+    <section class="home-section" aria-labelledby="needsTitle">
+        <div class="needs-head">
+            <div>
+                <div class="section-num"><span class="live-dot"></span>LIVE</div>
+                <h1 id="needsTitle">Needs right now</h1>
+                <p>Open blood requests, most urgent first · updated @DateTime.Now.ToString("hh:mm tt")</p>
             </div>
-        </div>
-        <div class="col-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <p class="text-muted small mb-1">Blood Requests</p>
-                            <h2 class="fw-bold text-primary mb-0">@Model.TotalRequests</h2>
-                            <small class="text-warning"><i class="fas fa-clock me-1"></i>@Model.PendingRequests pending</small>
-                        </div>
-                        <div class="bg-primary bg-opacity-10 rounded-3 p-2">
-                            <i class="fas fa-hand-holding-medical fa-lg text-primary"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <p class="text-muted small mb-1">Fulfilled</p>
-                            <h2 class="fw-bold text-success mb-0">@Model.FulfilledRequests</h2>
-                            <small class="text-muted">Lives saved</small>
-                        </div>
-                        <div class="bg-success bg-opacity-10 rounded-3 p-2">
-                            <i class="fas fa-heart fa-lg text-success"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <p class="text-muted small mb-1">Locations</p>
-                            <h2 class="fw-bold text-info mb-0">@Model.DistrictCount</h2>
-                            <small class="text-muted">@Model.ThanaCount thanas</small>
-                        </div>
-                        <div class="bg-info bg-opacity-10 rounded-3 p-2">
-                            <i class="fas fa-map-marker-alt fa-lg text-info"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-4">
-        <!-- Blood Group Availability -->
-        <div class="col-lg-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white border-0 pt-3">
-                    <h5 class="mb-0"><i class="fas fa-tint text-danger me-2"></i>Blood Group Availability</h5>
-                    <small class="text-muted">Active donors by blood group</small>
-                </div>
-                <div class="card-body pt-2">
-                    @foreach (var group in allGroups)
-                    {
-                        var count = Model.BloodGroupStats.GetValueOrDefault(group, 0);
-                        var pct = maxStat > 0 ? (int)((double)count / maxStat * 100) : 0;
-                        var color = group.Contains("O") ? "danger" : (group.Contains("AB") ? "purple" : (group.Contains("A") ? "primary" : "warning"));
-                        var colorClass = group.Contains("O") ? "bg-danger" : (group.Contains("AB") ? "bg-secondary" : (group.Contains("A+") || group.Contains("A-") ? "bg-primary" : "bg-warning"));
-                        <div class="mb-2">
-                            <div class="d-flex justify-content-between mb-1">
-                                <span class="fw-semibold"><span class="badge bg-danger me-2">@group</span></span>
-                                <span class="text-muted small">@count donors</span>
-                            </div>
-                            <div class="progress" style="height:10px;border-radius:8px">
-                                <div class="progress-bar @colorClass" style="width:@pct%;border-radius:8px;transition:width .8s ease"></div>
-                            </div>
-                        </div>
-                    }
-                    @if (!Model.BloodGroupStats.Any())
-                    {
-                        <p class="text-muted text-center py-3"><i class="fas fa-info-circle me-2"></i>No donors registered yet.</p>
-                    }
-                </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-controller="BloodRequest" asp-action="Index" asp-route-status="open" class="btn btn-outline-secondary">
+                    All open requests
+                </a>
+                <a asp-controller="BloodRequest" asp-action="Create" class="btn btn-danger">
+                    <i class="fas fa-plus me-1"></i>Request blood
+                </a>
             </div>
         </div>
 
-        <!-- Recent Urgent Requests -->
-        <div class="col-lg-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white border-0 pt-3 d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="mb-0"><i class="fas fa-bell text-warning me-2"></i>Pending Requests</h5>
-                        <small class="text-muted">Latest urgent blood needs</small>
-                    </div>
-                    <a asp-controller="BloodRequest" asp-action="Index" class="btn btn-sm btn-outline-danger">View All</a>
+        @if (firstCritical != null)
+        {
+            <a asp-controller="BloodRequest" asp-action="Details" asp-route-id="@firstCritical.BloodRequestId" class="critical-banner text-decoration-none">
+                <span class="pulse-dot"></span>
+                <div class="flex-grow-1">
+                    <b>@Model.CriticalOpen critical request@(Model.CriticalOpen == 1 ? "" : "s")</b> —
+                    @firstCritical.BloodGroup needed at @(firstCritical.HospitalName ?? firstCritical.District?.Name ?? "a hospital")
+                    (@StatsHelper.TimeAgo(firstCritical.CreatedDate)).
                 </div>
-                <div class="card-body pt-2 p-0">
-                    @if (!Model.RecentRequests.Any())
+                <span class="fw-semibold">Can you help? <i class="fas fa-arrow-right ms-1"></i></span>
+            </a>
+        }
+
+        <!-- KPI strip -->
+        <div class="kpi-strip">
+            <div class="kpi-chip">
+                <div class="ico"><i class="fas fa-hand-holding-medical"></i></div>
+                <div><div class="num">@Model.OpenRequests</div><div class="lbl">open requests</div></div>
+            </div>
+            <div class="kpi-chip @(Model.CriticalOpen > 0 ? "critical" : "")">
+                <div class="ico"><i class="fas fa-triangle-exclamation"></i></div>
+                <div><div class="num">@Model.CriticalOpen</div><div class="lbl">critical</div></div>
+            </div>
+            <div class="kpi-chip">
+                <div class="ico" style="background:#e6f4ea;color:#198754"><i class="fas fa-heart-pulse"></i></div>
+                <div><div class="num">@Model.EligibleNow</div><div class="lbl">donors eligible today</div></div>
+            </div>
+            <div class="kpi-chip">
+                <div class="ico" style="background:#e7f1ff;color:#0d6efd"><i class="fas fa-stopwatch"></i></div>
+                <div><div class="num">@StatsHelper.FormatDuration(Model.AvgMinutesToFirstAccept)</div><div class="lbl">avg. time to first donor "yes"</div></div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Requests -->
+            <div class="col-xl-8">
+                <div class="panel h-100">
+                    <div class="panel-title"><i class="fas fa-hand-holding-medical me-2"></i>Urgent requests</div>
+                    @if (!Model.UrgentRequests.Any())
                     {
-                        <p class="text-muted text-center py-4"><i class="fas fa-check-circle text-success me-2"></i>No pending requests.</p>
+                        <div class="empty-state">
+                            <i class="fas fa-circle-check text-success fa-2x mb-2"></i>
+                            <div>No open requests right now.</div>
+                        </div>
                     }
-                    else
+                    @foreach (var r in Model.UrgentRequests)
                     {
-                        <ul class="list-group list-group-flush">
-                            @foreach (var req in Model.RecentRequests)
-                            {
-                                var urgencyBg = req.Urgency == BloodDonationManagement.Models.UrgencyLevel.Critical ? "danger"
-                                    : req.Urgency == BloodDonationManagement.Models.UrgencyLevel.Urgent ? "warning" : "success";
-                                <li class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <span class="badge bg-danger me-2">@req.BloodGroup</span>
-                                            <span class="badge bg-@urgencyBg me-2">@req.Urgency</span>
-                                            <strong>@req.PatientName</strong>
-                                        </div>
-                                        <small class="text-muted">@req.District?.Name</small>
-                                    </div>
-                                    @if (!string.IsNullOrEmpty(req.HospitalName))
+                        var confirmed = r.Responses.Count(x => x.Status == ResponseStatus.Confirmed);
+                        var accepted = r.Responses.Count(x => x.Status is ResponseStatus.Accepted or ResponseStatus.Confirmed);
+                        var pct = r.UnitsNeeded == 0 ? 0 : Math.Min(100, confirmed * 100 / r.UnitsNeeded);
+                        var urg = r.Urgency switch
+                        {
+                            UrgencyLevel.Critical => ("urg-critical", "fa-triangle-exclamation"),
+                            UrgencyLevel.Urgent => ("urg-urgent", "fa-circle-exclamation"),
+                            _ => ("urg-normal", "fa-circle-check")
+                        };
+                        <a asp-controller="BloodRequest" asp-action="Details" asp-route-id="@r.BloodRequestId" class="req-row">
+                            <div class="bg-badge">@r.BloodGroup</div>
+                            <div class="req-main">
+                                <div class="req-top">
+                                    <span class="urg-chip @urg.Item1"><i class="fas @urg.Item2 me-1"></i>@r.Urgency</span>
+                                    <span class="req-hospital">@(r.HospitalName ?? "Hospital not specified")</span>
+                                    @if (r.IsVerified)
                                     {
-                                        <small class="text-muted"><i class="fas fa-hospital me-1"></i>@req.HospitalName</small>
+                                        <i class="fas fa-circle-check text-primary" title="Verified by admin"></i>
                                     }
-                                </li>
-                            }
-                        </ul>
+                                </div>
+                                <div class="req-meta">
+                                    <span><i class="fas fa-location-dot me-1"></i>@(r.District?.Name ?? "—")</span>
+                                    <span><i class="fas fa-clock me-1"></i>@StatsHelper.TimeAgo(r.CreatedDate)</span>
+                                    @if (r.NeededBy.HasValue)
+                                    {
+                                        <span><i class="fas fa-hourglass-half me-1"></i>by @r.NeededBy.Value.ToString("dd MMM, hh:mm tt")</span>
+                                    }
+                                    @if (accepted > 0)
+                                    {
+                                        <span class="text-success"><i class="fas fa-user-check me-1"></i>@accepted accepted</span>
+                                    }
+                                </div>
+                                <div class="req-progress">
+                                    <div class="bar"><i style="width:@pct%"></i></div>
+                                    <span>@confirmed / @r.UnitsNeeded unit(s) received</span>
+                                </div>
+                            </div>
+                            <span class="req-cta">Help <i class="fas fa-arrow-right ms-1"></i></span>
+                        </a>
                     }
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Quick Actions -->
-    <div class="row g-3 mt-2">
-        <div class="col-md-3">
-            <a asp-controller="Donor" asp-action="Index" class="card border-0 shadow-sm text-decoration-none h-100 card-hover">
-                <div class="card-body text-center py-4">
-                    <i class="fas fa-users fa-2x text-danger mb-2"></i>
-                    <h6 class="mb-0">Manage Donors</h6>
+            <!-- Availability -->
+            <div class="col-xl-4">
+                <div class="panel h-100">
+                    <div class="panel-title"><i class="fas fa-tint me-2"></i>Donors eligible today</div>
+                    <div class="bg-tiles">
+                        @foreach (var g in groups)
+                        {
+                            var n = Model.EligibleByGroup.GetValueOrDefault(g);
+                            var level = n == 0 ? ("lvl-none", "None", "fa-xmark") : n <= 2 ? ("lvl-low", "Low", "fa-arrow-down") : ("lvl-ok", "Good", "fa-check");
+                            <div class="bg-tile @level.Item1" title="@n eligible @g donor(s)">
+                                <div class="g">@g @if (DonorMatchingService.IsRareGroup(g)) { <i class="fas fa-gem" title="Rare group"></i> }</div>
+                                <div class="n">@n</div>
+                                <div class="s"><i class="fas @level.Item3 me-1"></i>@level.Item2</div>
+                            </div>
+                        }
+                    </div>
+                    <div class="small text-muted mt-3">
+                        <i class="fas fa-gem me-1"></i>Rare group ·
+                        Counts exclude donors in their rest period (90 days men / 120 days women) and donors who paused alerts.
+                    </div>
+                    <a asp-controller="Map" asp-action="Index" class="btn btn-outline-secondary btn-sm w-100 mt-3">
+                        <i class="fas fa-map-location-dot me-1"></i>See donors on the live map
+                    </a>
                 </div>
-            </a>
+            </div>
         </div>
-        <div class="col-md-3">
-            <a asp-controller="BloodRequest" asp-action="Create" class="card border-0 shadow-sm text-decoration-none h-100 card-hover">
-                <div class="card-body text-center py-4">
-                    <i class="fas fa-plus-circle fa-2x text-primary mb-2"></i>
-                    <h6 class="mb-0">Request Blood</h6>
+    </section>
+
+    <!-- ============================================================ 2. FOR YOU -->
+    @if (Model.IsAuthenticated)
+    {
+        <section class="home-section" aria-labelledby="forYouTitle">
+            <div class="section-head">
+                <div>
+                    <div class="section-num">PERSONAL</div>
+                    <h2 class="section-title" id="forYouTitle">For you</h2>
                 </div>
-            </a>
+            </div>
+            <div class="for-you">
+                @if (Model.MyDonor == null)
+                {
+                    <div class="fy-item">
+                        <div class="fy-icon"><i class="fas fa-user-plus"></i></div>
+                        <div class="flex-grow-1">
+                            <div class="fy-title">You are not a donor yet</div>
+                            <div class="fy-text">Create a donor profile so patients near you can find you.</div>
+                        </div>
+                        <a asp-controller="Donor" asp-action="Create" class="btn btn-sm btn-danger">Create profile</a>
+                    </div>
+                }
+                else if (Model.MyEligibility!.IsEligible && Model.MyDonor.IsAvailable)
+                {
+                    <div class="fy-item">
+                        <div class="fy-icon ok"><i class="fas fa-heart-pulse"></i></div>
+                        <div class="flex-grow-1">
+                            <div class="fy-title">You can donate today</div>
+                            <div class="fy-text">
+                                @if (Model.MyPendingAlerts > 0)
+                                {
+                                    <span><b>@Model.MyPendingAlerts</b> request(s) are waiting for your answer.</span>
+                                }
+                                else
+                                {
+                                    <span>No alerts waiting. We will notify you when you are a match.</span>
+                                }
+                            </div>
+                        </div>
+                        <a asp-controller="Donor" asp-action="MyProfile" class="btn btn-sm @(Model.MyPendingAlerts > 0 ? "btn-danger" : "btn-outline-secondary")">
+                            @(Model.MyPendingAlerts > 0 ? "Respond now" : "My profile")
+                        </a>
+                    </div>
+                }
+                else if (!Model.MyDonor.IsAvailable)
+                {
+                    <div class="fy-item">
+                        <div class="fy-icon muted"><i class="fas fa-pause"></i></div>
+                        <div class="flex-grow-1">
+                            <div class="fy-title">Your alerts are paused</div>
+                            <div class="fy-text">Switch them back on when you are ready to donate.</div>
+                        </div>
+                        <a asp-controller="Donor" asp-action="MyProfile" class="btn btn-sm btn-outline-secondary">Manage</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="fy-item">
+                        <div class="fy-icon warn"><i class="fas fa-hourglass-half"></i></div>
+                        <div class="flex-grow-1">
+                            <div class="fy-title">Resting: @Model.MyEligibility.DaysRemaining days left</div>
+                            <div class="fy-text">You can donate again on @Model.MyEligibility.NextEligibleDate?.ToString("dd MMM yyyy"). Thank you for donating!</div>
+                        </div>
+                        <a asp-controller="Donor" asp-action="MyProfile" class="btn btn-sm btn-outline-secondary">My profile</a>
+                    </div>
+                }
+
+                @if (Model.MyOpenRequests > 0)
+                {
+                    <div class="fy-item">
+                        <div class="fy-icon info"><i class="fas fa-hand-holding-medical"></i></div>
+                        <div class="flex-grow-1">
+                            <div class="fy-title">Your open requests: @Model.MyOpenRequests</div>
+                            <div class="fy-text">See matched donors and who has accepted.</div>
+                        </div>
+                        <a asp-controller="BloodRequest" asp-action="Index" asp-route-status="mine" class="btn btn-sm btn-outline-secondary">Track</a>
+                    </div>
+                }
+
+                @if (Model.IsAdmin)
+                {
+                    <div class="fy-item">
+                        <div class="fy-icon admin"><i class="fas fa-user-shield"></i></div>
+                        <div class="flex-grow-1">
+                            <div class="fy-title">Admin</div>
+                            <div class="fy-text">@(Model.OpenReports > 0 ? $"{Model.OpenReports} reported request(s) need review." : "No reports to review.")</div>
+                        </div>
+                        <a asp-controller="Admin" asp-action="@(Model.OpenReports > 0 ? "Reports" : "Dashboard")" class="btn btn-sm btn-outline-secondary">
+                            @(Model.OpenReports > 0 ? "Review" : "Analytics")
+                        </a>
+                    </div>
+                }
+            </div>
+        </section>
+    }
+
+    <!-- ============================================================ 3. HOW IT WORKS -->
+    <section class="home-section" aria-labelledby="howTitle">
+        <div class="section-head">
+            <div>
+                <div class="section-num">HOW IT WORKS</div>
+                <h2 class="section-title" id="howTitle">Smart Matching in 4 steps</h2>
+                <p class="section-desc">No more calling a list of strangers one by one.</p>
+            </div>
         </div>
-        <div class="col-md-3">
-            <a asp-controller="BloodSearch" asp-action="Index" class="card border-0 shadow-sm text-decoration-none h-100 card-hover">
-                <div class="card-body text-center py-4">
-                    <i class="fas fa-search fa-2x text-success mb-2"></i>
-                    <h6 class="mb-0">Find Donors</h6>
-                </div>
-            </a>
+        <div class="steps">
+            <div class="step">
+                <div class="step-n">1</div>
+                <i class="fas fa-file-medical step-ico"></i>
+                <h3>Post a request</h3>
+                <p>Blood group, units, hospital pin on the map and how urgent it is.</p>
+            </div>
+            <div class="step">
+                <div class="step-n">2</div>
+                <i class="fas fa-ranking-star step-ico"></i>
+                <h3>We rank donors</h3>
+                <p>Each eligible donor gets a Match Score: 35% compatibility, 30% distance, 20% readiness, 15% reliability.</p>
+            </div>
+            <div class="step">
+                <div class="step-n">3</div>
+                <i class="fas fa-bell step-ico"></i>
+                <h3>Best matches alerted</h3>
+                <p>The top donors get an instant alert. If nobody answers, the next wave is notified and the radius widens.</p>
+            </div>
+            <div class="step">
+                <div class="step-n">4</div>
+                <i class="fas fa-handshake step-ico"></i>
+                <h3>Donor says yes</h3>
+                <p>Only then is their number shared. After donating, their history and rest period update automatically.</p>
+            </div>
         </div>
-        <div class="col-md-3">
-            <a asp-controller="Map" asp-action="Index" class="card border-0 shadow-sm text-decoration-none h-100 card-hover">
-                <div class="card-body text-center py-4">
-                    <i class="fas fa-map-marked-alt fa-2x text-info mb-2"></i>
-                    <h6 class="mb-0">Live Map</h6>
-                </div>
-            </a>
+    </section>
+
+    <!-- ============================================================ 4. IMPACT + JOIN -->
+    <section class="home-section" aria-labelledby="impactTitle">
+        <div class="section-head">
+            <div>
+                <div class="section-num">IMPACT</div>
+                <h2 class="section-title" id="impactTitle">So far on BloodConnect</h2>
+            </div>
         </div>
-    </div>
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-3"><div class="impact"><div class="impact-num">@Model.TotalDonations</div><div class="impact-lbl">donations recorded</div></div></div>
+            <div class="col-6 col-lg-3"><div class="impact"><div class="impact-num">@Model.FulfilledRequests</div><div class="impact-lbl">requests fulfilled</div></div></div>
+            <div class="col-6 col-lg-3"><div class="impact"><div class="impact-num">@Model.ActiveDonors</div><div class="impact-lbl">registered donors</div></div></div>
+            <div class="col-6 col-lg-3"><div class="impact"><div class="impact-num">@Model.DistrictsCovered</div><div class="impact-lbl">districts with donors</div></div></div>
+        </div>
+
+        <div class="intro-band">
+            <div style="max-width:640px">
+                <h2 class="h4 mb-1">One donation can help up to three patients.</h2>
+                <p class="mb-0 opacity-75">
+                    Join as a donor. You are contacted only when you are a strong match, your number stays private
+                    until you say yes, and you can pause alerts at any time. <b>Blood is always free.</b>
+                </p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                @if (Model.MyDonor == null)
+                {
+                    <a asp-controller="Donor" asp-action="Create" class="btn btn-light text-danger fw-semibold">Become a donor</a>
+                }
+                <a asp-controller="BloodSearch" asp-action="Index" class="btn btn-outline-light">Find donors</a>
+            </div>
+        </div>
+    </section>
 </div>
-
-<style>
-    .card-hover { transition: transform .15s, box-shadow .15s; }
-    .card-hover:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.1) !important; }
-</style>

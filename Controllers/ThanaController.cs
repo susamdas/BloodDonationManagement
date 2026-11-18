@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using BloodDonationManagement.Data;
 using BloodDonationManagement.Models;
@@ -11,10 +11,12 @@ namespace BloodDonationManagement.Controllers
     public class ThanaController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly BloodDonationManagement.Services.AuditService _audit;
 
-        public ThanaController(ApplicationDbContext context)
+        public ThanaController(ApplicationDbContext context, BloodDonationManagement.Services.AuditService audit)
         {
             _context = context;
+            _audit = audit;
         }
 
         // GET: Thana
@@ -59,6 +61,7 @@ namespace BloodDonationManagement.Controllers
             {
                 _context.Add(thana);
                 await _context.SaveChangesAsync();
+                await _audit.LogAsync(BloodDonationManagement.Services.AuditActions.LocationChanged, "Thana", thana.ThanaId, $"Added thana {thana.Name}");
                 return RedirectToAction(nameof(Index));
             }
             ViewData["DistrictId"] = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(_context.Districts.OrderBy(d => d.Name), "DistrictId", "Name", thana.DistrictId);
@@ -92,6 +95,7 @@ namespace BloodDonationManagement.Controllers
                 {
                     _context.Update(thana);
                     await _context.SaveChangesAsync();
+                    await _audit.LogAsync(BloodDonationManagement.Services.AuditActions.LocationChanged, "Thana", thana.ThanaId, $"Renamed/edited thana {thana.Name}");
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -129,6 +133,7 @@ namespace BloodDonationManagement.Controllers
             {
                 _context.Thanas.Remove(thana);
                 await _context.SaveChangesAsync();
+                await _audit.LogAsync(BloodDonationManagement.Services.AuditActions.LocationChanged, "Thana", id, $"Deleted thana {thana.Name}");
             }
             return RedirectToAction(nameof(Index));
         }

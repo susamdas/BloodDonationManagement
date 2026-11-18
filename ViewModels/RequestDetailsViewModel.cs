@@ -28,6 +28,9 @@ public class RequestDetailsViewModel
     public List<TimelineItem> Timeline { get; set; } = new();
 
     public bool IsOwner { get; set; }
+
+    /// <summary>Patient name + requester phone: requester, admins and donors who accepted.</summary>
+    public bool CanSeeContact { get; set; }
     public bool AlreadyReported { get; set; }
     public int OpenReports { get; set; }
 

@@ -1,4 +1,4 @@
-﻿using BloodDonationManagement.Data;
+using BloodDonationManagement.Data;
 using BloodDonationManagement.Models;
 using BloodDonationManagement.Services;
 using BloodDonationManagement.ViewModels;
@@ -15,12 +15,15 @@ namespace BloodDonationManagement.Controllers
         private readonly ApplicationDbContext _context;
         private readonly EligibilityService _eligibility;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly AuditService _audit;
 
-        public DonorController(ApplicationDbContext context, EligibilityService eligibility, UserManager<IdentityUser> userManager)
+        public DonorController(ApplicationDbContext context, EligibilityService eligibility,
+                               UserManager<IdentityUser> userManager, AuditService audit)
         {
             _context = context;
             _eligibility = eligibility;
             _userManager = userManager;
+            _audit = audit;
         }
 
         private string? CurrentUserId => _userManager.GetUserId(User);
@@ -248,6 +251,9 @@ namespace BloodDonationManagement.Controllers
             }
 
             await _context.SaveChangesAsync();
+            if (IsAdmin && !IsOwner(donor))
+                await _audit.LogAsync(AuditActions.DonorEditedByAdmin, "Donor", donor.DonorId,
+                    $"Admin edited donor {donor.FullName} ({donor.BloodGroup}); active={donor.Status}, available={donor.IsAvailable}");
             TempData["SuccessMessage"] = "Donor profile updated.";
             return IsOwner(donor) ? RedirectToAction(nameof(MyProfile)) : RedirectToAction(nameof(Index));
         }
@@ -275,8 +281,10 @@ namespace BloodDonationManagement.Controllers
         {
             var donor = await _context.Donors.FindAsync(id);
             if (donor == null) return NotFound();
+            var summary = $"Deleted donor {donor.FullName} ({donor.BloodGroup})";
             _context.Donors.Remove(donor);
             await _context.SaveChangesAsync();
+            await _audit.LogAsync(AuditActions.DonorDeleted, "Donor", id, summary);
             TempData["SuccessMessage"] = "Donor deleted.";
             return RedirectToAction(nameof(Index));
         }

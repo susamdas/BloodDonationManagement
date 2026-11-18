@@ -11,10 +11,12 @@ namespace BloodDonationManagement.Controllers
     public class DistrictController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly BloodDonationManagement.Services.AuditService _audit;
 
-        public DistrictController(ApplicationDbContext context)
+        public DistrictController(ApplicationDbContext context, BloodDonationManagement.Services.AuditService audit)
         {
             _context = context;
+            _audit = audit;
         }
 
         // GET: District
@@ -57,6 +59,7 @@ namespace BloodDonationManagement.Controllers
             {
                 _context.Add(district);
                 await _context.SaveChangesAsync();
+                await _audit.LogAsync(BloodDonationManagement.Services.AuditActions.LocationChanged, "District", district.DistrictId, $"Added district {district.Name}");
                 return RedirectToAction(nameof(Index));
             }
             return View(district);
@@ -88,6 +91,7 @@ namespace BloodDonationManagement.Controllers
                 {
                     _context.Update(district);
                     await _context.SaveChangesAsync();
+                    await _audit.LogAsync(BloodDonationManagement.Services.AuditActions.LocationChanged, "District", district.DistrictId, $"Renamed/edited district {district.Name}");
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -123,6 +127,7 @@ namespace BloodDonationManagement.Controllers
             {
                 _context.Districts.Remove(district);
                 await _context.SaveChangesAsync();
+                await _audit.LogAsync(BloodDonationManagement.Services.AuditActions.LocationChanged, "District", id, $"Deleted district {district.Name}");
             }
             return RedirectToAction(nameof(Index));
         }

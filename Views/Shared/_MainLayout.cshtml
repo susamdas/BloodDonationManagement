@@ -26,24 +26,11 @@
             --primary-dark: #b02a37;
         }
         body { background: #f8f9fa; }
-        .navbar-brand { font-weight: 700; color: var(--primary) !important; }
-        .navbar-nav .nav-link { font-weight: 500; transition: color .2s; }
-        .navbar-nav .nav-link:hover,
-        .navbar-nav .nav-link.active { color: var(--primary) !important; }
-        .hero-section {
-            background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
-            color: white; padding: 60px 0; margin-bottom: 40px;
-        }
-        .hero-section h1 { font-size: 2.5rem; font-weight: 700; }
         .btn-custom {
             background: var(--primary); border: none; padding: 10px 26px;
             font-weight: 600; border-radius: 50px; color: white; transition: all .2s;
         }
         .btn-custom:hover { background: var(--primary-dark); color: white; transform: translateY(-1px); }
-        .footer { background: #2c3e50; color: white; padding: 40px 0 20px; margin-top: 60px; }
-        .footer h5 { color: var(--primary); margin-bottom: 16px; }
-        .footer a { color: #bdc3c7; text-decoration: none; }
-        .footer a:hover { color: white; }
         .blood-drop { color: var(--primary); animation: pulse 2s infinite; }
         @@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
         /* Urgency badges */
@@ -59,6 +46,7 @@
             font-size: 11px; display: none; align-items: center; justify-content: center;
         }
         /* Toast container */
+        .user-avatar { width: 30px; height: 30px; border-radius: 50%; background: #fdecee; color: #dc3545; font-weight: 700; font-size: .85rem; display: inline-flex; align-items: center; justify-content: center; }
         .notif-menu { width: 340px; max-width: 92vw; }
         #notifList { max-height: 380px; overflow-y: auto; }
         .notif-item { display: flex; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #f1f3f5; color: inherit; text-decoration: none; }
@@ -79,73 +67,104 @@
     @RenderSection("Head", required: false)
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
-        <div class="container">
-            <a class="navbar-brand" href="@Url.Action("Index","Home")">
-                <i class="fas fa-tint blood-drop me-2"></i>BloodConnect BD
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Home" asp-action="Index">
-                            <i class="fas fa-home me-1"></i>Home
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Donor" asp-action="Index">
-                            <i class="fas fa-users me-1"></i>Donors
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="BloodRequest" asp-action="Index">
-                            <i class="fas fa-hand-holding-medical me-1"></i>Requests
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="BloodSearch" asp-action="Index">
-                            <i class="fas fa-search me-1"></i>Search
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Map" asp-action="Index">
-                            <i class="fas fa-map-marked-alt me-1"></i>Live Map
-                        </a>
-                    </li>
+    @{
+        var isAuth = User.Identity?.IsAuthenticated == true;
+        var userName = User.Identity?.Name ?? "";
+        var initial = userName.Length > 0 ? char.ToUpperInvariant(userName[0]) : '?';
+    }
+    <div class="app-shell">
+
+        <!-- ============================== Sidebar (offcanvas on phones) -->
+        <aside class="offcanvas-lg offcanvas-start app-sidebar" tabindex="-1" id="appSidebar" aria-labelledby="appSidebarLabel">
+            <div class="sidebar-inner">
+                <div class="sidebar-brand">
+                    <a href="@Url.Action("Index", "Home")" id="appSidebarLabel">
+                        <span class="brand-drop"><i class="fas fa-tint"></i></span>
+                        <span>BloodConnect <small>BD</small></span>
+                    </a>
+                    <button type="button" class="btn-close btn-close-white d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#appSidebar" aria-label="Close menu"></button>
+                </div>
+
+                <div class="sidebar-scroll">
+                    <a asp-controller="BloodRequest" asp-action="Create" class="btn btn-danger w-100 fw-semibold mb-3">
+                        <i class="fas fa-plus me-2"></i>Request blood
+                    </a>
+
+                    <div class="side-label">Main</div>
+                    <nav class="side-nav" aria-label="Main">
+                        <a class="side-link" asp-controller="Home" asp-action="Index" data-match="/"><i class="fas fa-house"></i>Home</a>
+                        <a class="side-link" asp-controller="BloodRequest" asp-action="Index" data-match="/BloodRequest"><i class="fas fa-hand-holding-medical"></i>Blood requests</a>
+                        <a class="side-link" asp-controller="BloodSearch" asp-action="Index" data-match="/BloodSearch"><i class="fas fa-magnifying-glass"></i>Find donors</a>
+                        <a class="side-link" asp-controller="Map" asp-action="Index" data-match="/Map"><i class="fas fa-map-location-dot"></i>Live map</a>
+                        <a class="side-link" asp-controller="Donor" asp-action="Index" data-match="/Donor" data-exclude="/Donor/MyProfile"><i class="fas fa-users"></i>Donor list</a>
+                    </nav>
+
+                    @if (isAuth)
+                    {
+                        <div class="side-label">My space</div>
+                        <nav class="side-nav" aria-label="My space">
+                            <a class="side-link" asp-controller="Donor" asp-action="MyProfile" data-match="/Donor/MyProfile"><i class="fas fa-id-card"></i>My donor profile</a>
+                            <a class="side-link" asp-controller="BloodRequest" asp-action="Index" asp-route-status="mine" data-match="?status=mine"><i class="fas fa-list-check"></i>My requests</a>
+                            <a class="side-link" href="@Url.Page("/Account/Manage/Index", new { area = "Identity" })" data-match="/Identity/Account/Manage"><i class="fas fa-user-gear"></i>Account &amp; password</a>
+                        </nav>
+                    }
+
                     @if (isAdmin)
                     {
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-user-shield me-1"></i>Admin
-                                @if (openReports > 0)
-                                {
-                                    <span class="badge bg-danger rounded-pill ms-1">@openReports</span>
-                                }
+                        <div class="side-label">Admin</div>
+                        <nav class="side-nav" aria-label="Admin">
+                            <a class="side-link" asp-controller="Admin" asp-action="Dashboard" data-match="/Admin/Dashboard"><i class="fas fa-chart-line"></i>Analytics</a>
+                            <a class="side-link" asp-controller="Admin" asp-action="Users" data-match="/Admin/Users"><i class="fas fa-users-gear"></i>Users</a>
+                            <a class="side-link" asp-controller="Admin" asp-action="Reports" data-match="/Admin/Reports">
+                                <i class="fas fa-flag"></i>Reports
+                                @if (openReports > 0) { <span class="side-badge">@openReports</span> }
                             </a>
-                            <ul class="dropdown-menu shadow-sm">
-                                <li><a class="dropdown-item" asp-controller="Admin" asp-action="Dashboard"><i class="fas fa-chart-line me-2 text-danger"></i>Analytics Dashboard</a></li>
-                                <li><a class="dropdown-item" asp-controller="Admin" asp-action="Users"><i class="fas fa-users-cog me-2 text-danger"></i>User Management</a></li>
-                                <li>
-                                    <a class="dropdown-item d-flex justify-content-between align-items-center" asp-controller="Admin" asp-action="Reports">
-                                        <span><i class="fas fa-flag me-2 text-danger"></i>Reported Requests</span>
-                                        @if (openReports > 0) { <span class="badge bg-danger rounded-pill">@openReports</span> }
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider" /></li>
-                                <li><a class="dropdown-item" asp-controller="District" asp-action="Index"><i class="fas fa-location-arrow me-2 text-danger"></i>Locations</a></li>
-                            </ul>
-                        </li>
+                            <a class="side-link" asp-controller="Admin" asp-action="Audit" data-match="/Admin/Audit"><i class="fas fa-clipboard-list"></i>Audit log</a>
+                            <a class="side-link" asp-controller="District" asp-action="Index" data-match="/District"><i class="fas fa-location-arrow"></i>Locations</a>
+                        </nav>
                     }
-                </ul>
-                <ul class="navbar-nav align-items-center">
-                    <!-- Notification Bell -->
-                    <li class="nav-item dropdown me-2">
-                        <a class="notif-bell nav-link" id="notifBell" href="#" role="button" data-bs-toggle="dropdown"
+                </div>
+
+                <div class="sidebar-foot">
+                    @if (isAuth)
+                    {
+                        <div class="side-user">
+                            <span class="user-avatar">@initial</span>
+                            <div class="min-w-0 flex-grow-1">
+                                <div class="side-user-name text-truncate">@userName</div>
+                                <div class="side-user-role">@(isAdmin ? "Administrator" : "Member")</div>
+                            </div>
+                            <form asp-area="Identity" asp-page="/Account/Logout" method="post">
+                                <button type="submit" class="btn btn-sm btn-link side-logout" title="Log out" aria-label="Log out"><i class="fas fa-right-from-bracket"></i></button>
+                            </form>
+                        </div>
+                    }
+                    else
+                    {
+                        <a class="btn btn-outline-light btn-sm w-100 mb-2" href="@Url.Page("/Account/Login", new { area = "Identity" })"><i class="fas fa-right-to-bracket me-1"></i>Log in</a>
+                        <a class="btn btn-light btn-sm w-100 text-danger fw-semibold" href="@Url.Page("/Account/Register", new { area = "Identity" })"><i class="fas fa-user-plus me-1"></i>Create account</a>
+                    }
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============================== Main column -->
+        <div class="app-main">
+            <header class="app-topbar">
+                <button class="btn btn-light d-lg-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#appSidebar" aria-controls="appSidebar" aria-label="Open menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <a href="@Url.Action("Index", "Home")" class="topbar-brand d-lg-none"><i class="fas fa-tint text-danger me-1"></i>BloodConnect</a>
+                <div class="topbar-title d-none d-lg-block">@ViewData["Title"]</div>
+
+                <div class="ms-auto d-flex align-items-center gap-2">
+                    <a asp-controller="BloodRequest" asp-action="Create" class="btn btn-sm btn-danger d-none d-sm-inline-block"><i class="fas fa-plus me-1"></i>Request blood</a>
+
+                    <!-- Notification bell -->
+                    <div class="dropdown">
+                        <a class="notif-bell btn btn-light" id="notifBell" href="#" role="button" data-bs-toggle="dropdown"
                            data-bs-auto-close="outside" aria-expanded="false" aria-label="Notifications">
-                            <i class="fas fa-bell fa-lg"></i>
+                            <i class="fas fa-bell"></i>
                             <span class="notif-count" id="notifCount">0</span>
                         </a>
                         <div class="dropdown-menu dropdown-menu-end shadow p-0 notif-menu">
@@ -154,7 +173,7 @@
                                 <small class="text-muted" id="notifHint">Live</small>
                             </div>
                             <div id="notifList">
-                                @if (User.Identity?.IsAuthenticated == true)
+                                @if (isAuth)
                                 {
                                     <div class="text-center text-muted small py-4">Loading…</div>
                                 }
@@ -165,153 +184,77 @@
                                     </div>
                                 }
                             </div>
-                            @if (User.Identity?.IsAuthenticated == true)
+                            @if (isAuth)
                             {
                                 <div class="border-top text-center py-2 small">
                                     <a asp-controller="Donor" asp-action="MyProfile" class="text-decoration-none">View my donor profile</a>
                                 </div>
                             }
                         </div>
-                    </li>
-                    @if (User.Identity?.IsAuthenticated == true)
+                    </div>
+
+                    @if (isAuth)
                     {
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Donor" asp-action="MyProfile">
-                                <i class="fas fa-id-card me-1"></i>My Donor Profile
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="@Url.Page("/Account/Manage/Index", new { area = "Identity" })">
-                                <i class="fas fa-user-circle me-1"></i>@(User.Identity?.Name ?? "")
-                                @if (User.IsInRole("Admin"))
-                                {
-                                    <span class="badge ms-1" style="background:#dc3545;font-size:10px;vertical-align:middle;">Admin</span>
-                                }
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <form asp-area="Identity" asp-page="/Account/Logout" method="post" class="d-inline">
-                                <button type="submit" class="btn btn-custom ms-2">
-                                    <i class="fas fa-sign-out-alt me-1"></i>Logout
-                                </button>
-                            </form>
-                        </li>
+                        <span class="user-avatar d-lg-none" title="@userName">@initial</span>
                     }
                     else
                     {
-                        <li class="nav-item">
-                            <a class="nav-link" href="@Url.Page("/Account/Login", new { area = "Identity" })">
-                                <i class="fas fa-sign-in-alt me-1"></i>Login
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="btn btn-custom ms-2" href="@Url.Page("/Account/Register", new { area = "Identity" })">
-                                <i class="fas fa-user-plus me-1"></i>Register
-                            </a>
-                        </li>
+                        <a class="btn btn-sm btn-outline-secondary d-lg-none" href="@Url.Page("/Account/Login", new { area = "Identity" })">Log in</a>
                     }
-                </ul>
-            </div>
+                </div>
+            </header>
+
+            <main class="app-content">
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="container mt-3">
+                        <div class="alert alert-success alert-dismissible fade show flash-alert">
+                            <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </div>
+                }
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="container mt-3">
+                        <div class="alert alert-danger alert-dismissible fade show flash-alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>@TempData["ErrorMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </div>
+                }
+                @if (TempData["InfoMessage"] != null)
+                {
+                    <div class="container mt-3">
+                        <div class="alert alert-info alert-dismissible fade show flash-alert">
+                            <i class="fas fa-info-circle me-2"></i>@TempData["InfoMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </div>
+                }
+
+                @RenderBody()
+            </main>
+
+            <footer class="app-footer">
+                <div class="container d-flex flex-wrap justify-content-between gap-3">
+                    <div>
+                        <strong class="text-danger"><i class="fas fa-tint me-1"></i>BloodConnect BD</strong>
+                        <span class="ms-2">Connecting blood donors with those in need across Bangladesh.</span>
+                    </div>
+                    <div class="d-flex flex-wrap gap-3">
+                        <span><i class="fas fa-phone me-1"></i>01714-496737</span>
+                        <span><i class="fas fa-envelope me-1"></i>susam.gbit@gmail.com</span>
+                        <a href="@Url.Action("Privacy","Home")">Privacy</a>
+                    </div>
+                </div>
+                <div class="container mt-2 small opacity-75">&copy; @DateTime.Now.Year BloodConnect BD · Created by Susam Das</div>
+            </footer>
         </div>
-    </nav>
-
-    <!-- Main Content -->
-    <main>
-        @if (ViewBag.ShowHero != false && ViewData["Title"]?.ToString() == "Dashboard")
-        {
-            <section class="hero-section text-center">
-                <div class="container">
-                    <h1><i class="fas fa-tint blood-drop me-3"></i>Save Lives, Donate Blood</h1>
-                    <p class="lead mb-4">Connect blood donors with those in need across Bangladesh — instantly.</p>
-                    <a asp-controller="BloodSearch" asp-action="Index" class="btn btn-light btn-lg me-3">
-                        <i class="fas fa-search me-2"></i>Find Donors
-                    </a>
-                    <a asp-controller="BloodRequest" asp-action="Create" class="btn btn-outline-light btn-lg me-3">
-                        <i class="fas fa-plus me-2"></i>Request Blood
-                    </a>
-                    <a asp-controller="Map" asp-action="Index" class="btn btn-outline-light btn-lg">
-                        <i class="fas fa-map-marked-alt me-2"></i>Live Map
-                    </a>
-                </div>
-            </section>
-        }
-
-        @if (TempData["SuccessMessage"] != null)
-        {
-            <div class="container mt-3">
-                <div class="alert alert-success alert-dismissible fade show flash-alert">
-                    <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            </div>
-        }
-        @if (TempData["ErrorMessage"] != null)
-        {
-            <div class="container mt-3">
-                <div class="alert alert-danger alert-dismissible fade show flash-alert">
-                    <i class="fas fa-exclamation-circle me-2"></i>@TempData["ErrorMessage"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            </div>
-        }
-        @if (TempData["InfoMessage"] != null)
-        {
-            <div class="container mt-3">
-                <div class="alert alert-info alert-dismissible fade show flash-alert">
-                    <i class="fas fa-info-circle me-2"></i>@TempData["InfoMessage"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            </div>
-        }
-
-        @RenderBody()
-    </main>
+    </div>
 
     <!-- Toast Notification Area -->
     <div id="toastArea"></div>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-4">
-                    <h5><i class="fas fa-tint me-2"></i>BloodConnect BD</h5>
-                    <p>Connecting blood donors with those in need across Bangladesh. Every drop counts in saving lives.</p>
-                </div>
-                <div class="col-md-2">
-                    <h5>Quick Links</h5>
-                    <ul class="list-unstyled">
-                        <li><a asp-controller="Home" asp-action="Index">Home</a></li>
-                        <li><a asp-controller="Map" asp-action="Index">Live Map</a></li>
-                        <li><a asp-controller="BloodSearch" asp-action="Index">Find Donors</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-3">
-                    <h5>For Donors</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="@Url.Page("/Account/Register", new { area = "Identity" })">Become a Donor</a></li>
-                        <li><a href="@Url.Page("/Account/Manage/Index", new { area = "Identity" })">My Account</a></li>
-                        <li><a asp-controller="Donor" asp-action="Create">Register Donor</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-3">
-                    <h5>Emergency</h5>
-                    <p><i class="fas fa-phone me-2"></i>01714-496737</p>
-                    <p><i class="fas fa-envelope me-2"></i>susam.gbit@gmail.com</p>
-                    <p><i class="fas fa-clock me-2"></i>24/7 Available</p>
-                </div>
-            </div>
-            <hr class="mt-3" style="border-color:#ffffff30">
-            <div class="row">
-                <div class="col-md-6">
-                    <p class="mb-0">&copy; 2025 BloodConnect BD. All rights reserved. Created by Susam Das</p>
-                </div>
-                <div class="col-md-6 text-md-end">
-                    <a href="@Url.Action("Privacy","Home")" class="me-3">Privacy Policy</a>
-                </div>
-            </div>
-        </div>
-    </footer>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -327,15 +270,21 @@
             });
         }, 5000);
 
-        // Active nav link
+        // Active sidebar link
         (function () {
             var path = window.location.pathname.toLowerCase();
-            document.querySelectorAll('.navbar-nav .nav-link').forEach(function (link) {
-                if (link.getAttribute('href') && link.getAttribute('href') !== '/' &&
-                    path.includes(link.getAttribute('href').toLowerCase().split('?')[0])) {
-                    link.classList.add('active');
-                }
+            var full = (path + window.location.search).toLowerCase();
+            var best = null, bestLen = -1;
+            document.querySelectorAll('.side-link[data-match]').forEach(function (link) {
+                var m = link.getAttribute('data-match').toLowerCase();
+                var ex = (link.getAttribute('data-exclude') || '').toLowerCase();
+                var hit = m === '/' ? (path === '/' || path === '/home' || path === '/home/index')
+                        : m.charAt(0) === '?' ? full.indexOf(m) >= 0
+                        : path.indexOf(m) === 0;
+                if (hit && ex && path.indexOf(ex) === 0) hit = false;
+                if (hit && m.length > bestLen) { best = link; bestLen = m.length; }
             });
+            if (best) { best.classList.add('active'); best.setAttribute('aria-current', 'page'); }
         })();
 
         // ---------------- Notifications: stored personal alerts (bell) + live SignalR push

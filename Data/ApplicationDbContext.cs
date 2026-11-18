@@ -19,6 +19,7 @@ namespace BloodDonationManagement.Data
         public DbSet<Donation> Donations { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<RequestReport> RequestReports { get; set; }
+        public DbSet<AuditLog> AuditLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -74,6 +75,11 @@ namespace BloodDonationManagement.Data
 
             modelBuilder.Entity<Notification>()
                 .HasIndex(n => new { n.UserId, n.IsRead });
+
+            modelBuilder.Entity<AuditLog>()
+                .HasIndex(a => a.At);
+            modelBuilder.Entity<AuditLog>()
+                .HasIndex(a => a.Action);
 
             modelBuilder.Entity<RequestReport>()
                 .HasOne(r => r.BloodRequest)

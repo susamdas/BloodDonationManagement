@@ -1,4 +1,4 @@
-using BloodDonationManagement.Data;
+﻿using BloodDonationManagement.Data;
 using BloodDonationManagement.Models;
 using BloodDonationManagement.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -113,9 +113,7 @@ public class MapDataController : ControllerBase
             .Select(r => new
             {
                 r.BloodRequestId,
-                r.PatientName,
                 r.BloodGroup,
-                r.ContactNo,
                 r.Latitude,
                 r.Longitude,
                 r.Urgency,

@@ -35,6 +35,8 @@ builder.Services.Configure<MatchingOptions>(builder.Configuration.GetSection(Mat
 builder.Services.AddScoped<EligibilityService>();
 builder.Services.AddScoped<DonorMatchingService>();
 builder.Services.AddScoped<NotificationService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<AuditService>();
 
 var app = builder.Build();
 
