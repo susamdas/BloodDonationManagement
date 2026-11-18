@@ -1,0 +1,251 @@
+@model BloodDonationManagement.ViewModels.AnalyticsViewModel
+@{
+    ViewData["Title"] = "Analytics";
+    Layout = "~/Views/Shared/_MainLayout.cshtml";
+    var maxUrgency = Math.Max(1, Model.ByUrgency.Count == 0 ? 1 : Model.ByUrgency.Max(x => x.Value));
+    var maxDistrict = Math.Max(1, Model.TopDistricts.Count == 0 ? 1 : Model.TopDistricts.Max(x => x.Value));
+    string AvgTime(double? minutes) => minutes switch
+    {
+        null => "—",
+        < 60 => $"{minutes:0} min",
+        < 1440 => $"{minutes / 60:0.0} h",
+        _ => $"{minutes / 1440:0.0} days"
+    };
+    var urgencyStyle = new Dictionary<string, (string Color, string Icon)>
+    {
+        ["Normal"] = ("#0ca30c", "fa-circle-check"),
+        ["Urgent"] = ("#fab219", "fa-circle-exclamation"),
+        ["Critical"] = ("#d03b3b", "fa-triangle-exclamation")
+    };
+}
+
+@section Head {
+    <style>
+        .kpi { background: #fff; border-radius: 14px; padding: 18px; height: 100%; }
+        .kpi .num { font-size: 1.9rem; font-weight: 800; line-height: 1.1; color: #0b0b0b; }
+        .kpi .lbl { font-size: .8rem; color: #52514e; }
+        .kpi .sub { font-size: .75rem; color: #898781; }
+        .kpi .ico { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: #fdecee; color: #dc3545; }
+        .chart-card { background: #fff; border-radius: 14px; padding: 18px; height: 100%; }
+        .chart-card h2 { font-size: 1rem; margin-bottom: 2px; }
+        .chart-card .desc { font-size: .78rem; color: #898781; margin-bottom: 12px; }
+        .hbar { display: grid; grid-template-columns: 110px 1fr 40px; gap: 10px; align-items: center; margin-bottom: 10px; font-size: .85rem; }
+        .hbar .track { background: #f1f3f5; border-radius: 4px; height: 12px; overflow: hidden; }
+        .hbar .fill { height: 100%; border-radius: 0 4px 4px 0; }
+        .hbar .val { text-align: right; font-weight: 600; color: #0b0b0b; }
+        .hero-metric { background: linear-gradient(135deg, #dc3545, #b02a37); color: #fff; border-radius: 14px; padding: 18px; height: 100%; }
+        .hero-metric .num { font-size: 2.2rem; font-weight: 800; }
+    </style>
+}
+
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-4">
+        <div>
+            <h1 class="h3 mb-0"><i class="fas fa-chart-line text-danger me-2"></i>Analytics Dashboard</h1>
+            <div class="text-muted small">Live figures from the BloodConnect BD database · updated @DateTime.Now.ToString("dd MMM yyyy, hh:mm tt")</div>
+        </div>
+        @if (Model.OpenReports > 0)
+        {
+            <a asp-action="Reports" class="btn btn-outline-danger btn-sm"><i class="fas fa-flag me-1"></i>@Model.OpenReports report(s) to review</a>
+        }
+    </div>
+
+    <!-- KPI row -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4 col-lg-3">
+            <div class="hero-metric shadow-sm">
+                <div class="small opacity-75"><i class="fas fa-stopwatch me-1"></i>Avg. time to first donor "yes"</div>
+                <div class="num">@AvgTime(Model.AvgMinutesToFirstAccept)</div>
+                <div class="small opacity-75">from request posted to first acceptance</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg">
+            <div class="kpi shadow-sm">
+                <div class="d-flex justify-content-between"><div class="lbl">Eligible donors now</div><div class="ico"><i class="fas fa-heart-pulse"></i></div></div>
+                <div class="num">@Model.EligibleNow</div>
+                <div class="sub">of @Model.ActiveDonors active · @Model.RareEligible rare-group</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg">
+            <div class="kpi shadow-sm">
+                <div class="d-flex justify-content-between"><div class="lbl">Open requests</div><div class="ico"><i class="fas fa-hand-holding-medical"></i></div></div>
+                <div class="num">@Model.OpenRequests</div>
+                <div class="sub">@Model.CriticalOpen critical</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg">
+            <div class="kpi shadow-sm">
+                <div class="d-flex justify-content-between"><div class="lbl">Fulfilment rate</div><div class="ico"><i class="fas fa-flag-checkered"></i></div></div>
+                <div class="num">@Model.FulfilmentRate%</div>
+                <div class="sub">@Model.FulfilledRequests fulfilled (vs expired)</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg">
+            <div class="kpi shadow-sm">
+                <div class="d-flex justify-content-between"><div class="lbl">Donor acceptance</div><div class="ico"><i class="fas fa-handshake"></i></div></div>
+                <div class="num">@Model.AcceptanceRate%</div>
+                <div class="sub">@Model.TotalDonations donations recorded</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <!-- Supply vs demand -->
+        <div class="col-lg-7">
+            <div class="chart-card shadow-sm">
+                <h2>Supply vs demand by blood group</h2>
+                <div class="desc">Eligible donors today compared with requests in the last 90 days</div>
+                <div style="height:280px"><canvas id="supplyChart" aria-label="Bar chart of eligible donors and requests by blood group" role="img"></canvas></div>
+                <details class="mt-2 small">
+                    <summary class="text-muted">View as table</summary>
+                    <table class="table table-sm mt-2 mb-0">
+                        <thead><tr><th>Group</th><th class="text-end">Eligible donors</th><th class="text-end">Requests (90 days)</th></tr></thead>
+                        <tbody>
+                            @for (var i = 0; i < Model.BloodGroups.Count; i++)
+                            {
+                                <tr><td>@Model.BloodGroups[i]</td><td class="text-end">@Model.EligibleByGroup[i]</td><td class="text-end">@Model.RequestsByGroup[i]</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </details>
+            </div>
+        </div>
+
+        <!-- Urgency + districts -->
+        <div class="col-lg-5">
+            <div class="chart-card shadow-sm mb-3">
+                <h2>Requests by urgency</h2>
+                <div class="desc">All requests</div>
+                @foreach (var u in Model.ByUrgency)
+                {
+                    var st = urgencyStyle[u.Label];
+                    <div class="hbar">
+                        <div><i class="fas @st.Icon me-1" style="color:@st.Color"></i>@u.Label</div>
+                        <div class="track"><div class="fill" style="width:@(u.Value * 100 / maxUrgency)%;background:@st.Color"></div></div>
+                        <div class="val">@u.Value</div>
+                    </div>
+                }
+            </div>
+            <div class="chart-card shadow-sm">
+                <h2>Top districts</h2>
+                <div class="desc">Where requests come from</div>
+                @if (!Model.TopDistricts.Any())
+                {
+                    <p class="text-muted small mb-0">No requests yet.</p>
+                }
+                @foreach (var d in Model.TopDistricts)
+                {
+                    <div class="hbar">
+                        <div class="text-truncate">@d.Label</div>
+                        <div class="track"><div class="fill" style="width:@(d.Value * 100 / maxDistrict)%;background:#2a78d6"></div></div>
+                        <div class="val">@d.Value</div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- Trend -->
+        <div class="col-lg-8">
+            <div class="chart-card shadow-sm">
+                <h2>Last 30 days</h2>
+                <div class="desc">Requests posted and requests fulfilled per day</div>
+                <div style="height:260px"><canvas id="trendChart" aria-label="Line chart of requests posted and fulfilled per day" role="img"></canvas></div>
+                <details class="mt-2 small">
+                    <summary class="text-muted">View as table</summary>
+                    <div class="table-responsive" style="max-height:220px">
+                        <table class="table table-sm mt-2 mb-0">
+                            <thead><tr><th>Day</th><th class="text-end">Posted</th><th class="text-end">Fulfilled</th></tr></thead>
+                            <tbody>
+                                @for (var i = Model.TrendDays.Count - 1; i >= 0; i--)
+                                {
+                                    <tr><td>@Model.TrendDays[i]</td><td class="text-end">@Model.TrendCreated[i]</td><td class="text-end">@Model.TrendFulfilled[i]</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </details>
+            </div>
+        </div>
+
+        <!-- Reliable donors -->
+        <div class="col-lg-4">
+            <div class="chart-card shadow-sm">
+                <h2>Most reliable donors</h2>
+                <div class="desc">Highest response rate (2+ alerts) — feeds the Reliability factor</div>
+                @if (!Model.TopDonors.Any())
+                {
+                    <p class="text-muted small mb-0">Not enough response history yet.</p>
+                }
+                <ul class="list-unstyled mb-0">
+                    @foreach (var d in Model.TopDonors)
+                    {
+                        <li class="d-flex align-items-center gap-2 py-2 border-bottom">
+                            <span class="bg-badge sm">@d.BloodGroup</span>
+                            <a asp-controller="Donor" asp-action="Details" asp-route-id="@d.DonorId" class="flex-grow-1 text-decoration-none text-dark small fw-semibold">@d.Name</a>
+                            <span class="small text-muted">@d.Donations <i class="fas fa-tint text-danger"></i></span>
+                            <span class="badge bg-success">@d.ResponseRate%</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            // Validated categorical pair (blue / orange) + recessive axes
+            var C1 = '#2a78d6', C2 = '#eb6834', GRID = '#e1e0d9', MUTED = '#898781', INK = '#0b0b0b';
+            Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+            Chart.defaults.color = MUTED;
+
+            var axis = {
+                x: { grid: { display: false }, border: { color: '#c3c2b7' }, ticks: { color: MUTED } },
+                y: { beginAtZero: true, grid: { color: GRID }, border: { display: false }, ticks: { color: MUTED, precision: 0 } }
+            };
+            var tooltip = { backgroundColor: '#fff', titleColor: INK, bodyColor: INK, borderColor: GRID, borderWidth: 1, padding: 10, boxPadding: 4 };
+            var legend = { position: 'top', align: 'start', labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, color: '#52514e' } };
+
+            new Chart(document.getElementById('supplyChart'), {
+                type: 'bar',
+                data: {
+                    labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BloodGroups)),
+                    datasets: [
+                        { label: 'Eligible donors', data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.EligibleByGroup)),
+                          backgroundColor: C1, borderRadius: 4, borderSkipped: 'start', borderColor: '#fff', borderWidth: 2, maxBarThickness: 22 },
+                        { label: 'Requests (90 days)', data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RequestsByGroup)),
+                          backgroundColor: C2, borderRadius: 4, borderSkipped: 'start', borderColor: '#fff', borderWidth: 2, maxBarThickness: 22 }
+                    ]
+                },
+                options: {
+                    maintainAspectRatio: false, scales: axis,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: legend, tooltip: tooltip }
+                }
+            });
+
+            new Chart(document.getElementById('trendChart'), {
+                type: 'line',
+                data: {
+                    labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.TrendDays)),
+                    datasets: [
+                        { label: 'Posted', data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.TrendCreated)),
+                          borderColor: C1, backgroundColor: C1, borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, tension: .3 },
+                        { label: 'Fulfilled', data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.TrendFulfilled)),
+                          borderColor: C2, backgroundColor: C2, borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, tension: .3 }
+                    ]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: { x: Object.assign({}, axis.x, { ticks: { color: MUTED, maxTicksLimit: 8 } }), y: axis.y },
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: legend, tooltip: tooltip }
+                }
+            });
+        })();
+    </script>
+}

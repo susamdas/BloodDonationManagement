@@ -85,8 +85,15 @@ public static class DataSeeder
             new() { DistrictId = 64, Name = "Sherpur" },
         };
 
+        // DistrictId is an IDENTITY column: explicit IDs need IDENTITY_INSERT on the same connection.
         context.Districts.AddRange(districts);
-        await context.SaveChangesAsync();
+        await using (var tx = await context.Database.BeginTransactionAsync())
+        {
+            await context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT [Districts] ON");
+            await context.SaveChangesAsync();
+            await context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT [Districts] OFF");
+            await tx.CommitAsync();
+        }
 
         var thanas = new List<Thana>
         {

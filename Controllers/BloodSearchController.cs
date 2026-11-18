@@ -26,7 +26,7 @@ public class BloodSearchController : Controller
         var query = _context.Donors
             .Include(d => d.District)
             .Include(d => d.Thana)
-            .Where(d => d.Status)
+            .Where(d => d.Status && !d.IsHidden)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(bloodGroup))

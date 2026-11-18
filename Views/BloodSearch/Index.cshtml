@@ -1,4 +1,6 @@
-@model BloodDonationManagement.ViewModels.BloodSearchViewModel
+﻿@model BloodDonationManagement.ViewModels.BloodSearchViewModel
+@using BloodDonationManagement.Services
+@inject EligibilityService Eligibility
 @{
     ViewData["Title"] = "Search Blood Donors";
     Layout = "~/Views/Shared/_MainLayout.cshtml";
@@ -88,6 +90,16 @@
         </div>
     }
 
+    <!-- Privacy + Smart Matching call to action -->
+    <div class="alert alert-light border d-flex flex-wrap align-items-center gap-3 mb-3">
+        <i class="fas fa-wand-magic-sparkles fa-lg text-danger"></i>
+        <div class="flex-grow-1 small">
+            <strong>Need blood urgently?</strong> Post a request instead of calling one by one — Smart Matching ranks the best
+            eligible donors nearby and alerts them instantly. Donor numbers stay private until a donor accepts.
+        </div>
+        <a asp-controller="BloodRequest" asp-action="Create" class="btn btn-danger btn-sm"><i class="fas fa-plus me-1"></i>Request blood</a>
+    </div>
+
     <!-- Results -->
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center pt-3">
@@ -134,13 +146,21 @@
                             @foreach (var item in Model.ResultsWithDistance)
                             {
                                 var d = item.Donor;
-                                var eligible = !d.LastDonationDate.HasValue || d.LastDonationDate.Value <= DateTime.Today.AddDays(-90);
+                                var elig = Eligibility.Evaluate(d);
+                                var eligible = elig.IsEligible && d.IsAvailable;
                                 <tr>
                                     <td>
                                         <strong>@d.FullName</strong>
                                         @if (!eligible)
                                         {
-                                            <span class="badge bg-secondary ms-1" title="Cannot donate for @((int)(d.LastDonationDate!.Value.AddDays(90) - DateTime.Today).TotalDays) more days">On cooldown</span>
+                                            @if (!d.IsAvailable)
+                                            {
+                                                <span class="badge bg-secondary ms-1">Alerts paused</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary ms-1" title="Can donate again on @elig.NextEligibleDate?.ToString("dd MMM yyyy")">Resting @elig.DaysRemaining more days</span>
+                                            }
                                         }
                                     </td>
                                     <td><span class="badge bg-danger fs-6">@d.BloodGroup</span></td>
@@ -149,9 +169,16 @@
                                         @if (d.Thana != null) { <br /><small class="text-muted">@d.Thana.Name</small> }
                                     </td>
                                     <td>
-                                        <a href="tel:@d.ContactNo" class="text-decoration-none">
-                                            <i class="fas fa-phone me-1 text-success"></i>@d.ContactNo
-                                        </a>
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <a href="tel:@d.ContactNo" class="text-decoration-none">
+                                                <i class="fas fa-phone me-1 text-success"></i>@d.ContactNo
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted" title="Post a blood request — matched donors are alerted and their number is shared when they accept."><i class="fas fa-lock me-1"></i>@PrivacyHelper.MaskPhone(d.ContactNo)</span>
+                                        }
                                     </td>
                                     <td>
                                         @if (d.LastDonationDate.HasValue)

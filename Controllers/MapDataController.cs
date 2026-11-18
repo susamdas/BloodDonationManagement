@@ -1,5 +1,6 @@
 using BloodDonationManagement.Data;
 using BloodDonationManagement.Models;
+using BloodDonationManagement.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,7 +12,60 @@ public class MapDataController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
 
-    public MapDataController(ApplicationDbContext context) => _context = context;
+    private readonly EligibilityService _eligibility;
+    private readonly DonorMatchingService _matching;
+
+    public MapDataController(ApplicationDbContext context, EligibilityService eligibility, DonorMatchingService matching)
+    {
+        _context = context;
+        _eligibility = eligibility;
+        _matching = matching;
+    }
+
+    /// <summary>
+    /// Live preview for the request form: how many donors Smart Matching would find.
+    /// Returns counts and scores only (no names or phone numbers).
+    /// </summary>
+    [HttpGet("match-preview")]
+    public async Task<IActionResult> MatchPreview(string bloodGroup, UrgencyLevel urgency = UrgencyLevel.Normal,
+        int? districtId = null, int? thanaId = null, double? lat = null, double? lng = null)
+    {
+        if (string.IsNullOrWhiteSpace(bloodGroup) || !BloodCompatibilityService.IsValidGroup(bloodGroup))
+            return BadRequest();
+
+        var probe = new BloodRequest
+        {
+            BloodGroup = bloodGroup.Trim().ToUpperInvariant(),
+            Urgency = urgency,
+            DistrictId = districtId,
+            ThanaId = thanaId,
+            Latitude = lat,
+            Longitude = lng,
+            RequesterUserId = User.Identity?.IsAuthenticated == true
+                ? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value : null,
+            PatientName = "preview",
+            ContactNo = "0"
+        };
+        var result = await _matching.FindMatchesAsync(probe);
+        return Ok(new
+        {
+            matched = result.Matches.Count,
+            radiusKm = result.RadiusKm,
+            expanded = result.RadiusExpanded,
+            hasLocation = lat.HasValue && lng.HasValue,
+            bestScore = result.Matches.Count > 0 ? Math.Round(result.Matches[0].Score) : 0,
+            notifyTopN = _matching.Options.NotifyTopN,
+            excluded = new
+            {
+                incompatible = result.ExcludedIncompatible,
+                resting = result.ExcludedOnCooldown,
+                paused = result.ExcludedUnavailable,
+                tooFar = result.ExcludedTooFar
+            }
+        });
+    }
+
+    private static string FirstNameOnly(string name) => name.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? name;
 
     [HttpGet("donors")]
     public async Task<IActionResult> GetDonors([FromQuery] string? bloodGroup)
@@ -19,23 +73,32 @@ public class MapDataController : ControllerBase
         var query = _context.Donors
             .Include(d => d.District)
             .Include(d => d.Thana)
-            .Where(d => d.Status && d.Latitude.HasValue && d.Longitude.HasValue);
+            .Where(d => d.Status && !d.IsHidden && d.Latitude.HasValue && d.Longitude.HasValue);
 
         if (!string.IsNullOrWhiteSpace(bloodGroup))
             query = query.Where(d => d.BloodGroup == bloodGroup.ToUpper());
 
-        var donors = await query.Select(d => new
+        var list = await query.ToListAsync();
+        var isAdmin = User.IsInRole("Admin");
+
+        // Privacy: masked phone and approximate (~1 km) position for the public map
+        var donors = list.Select(d =>
         {
-            d.DonorId,
-            d.FullName,
-            d.BloodGroup,
-            d.ContactNo,
-            d.Latitude,
-            d.Longitude,
-            District = d.District != null ? d.District.Name : "",
-            Thana = d.Thana != null ? d.Thana.Name : "",
-            LastDonation = d.LastDonationDate != null ? d.LastDonationDate.Value.ToString("yyyy-MM-dd") : ""
-        }).ToListAsync();
+            var e = _eligibility.Evaluate(d);
+            return new
+            {
+                d.DonorId,
+                FullName = isAdmin ? d.FullName : FirstNameOnly(d.FullName),
+                d.BloodGroup,
+                ContactNo = isAdmin ? d.ContactNo : PrivacyHelper.MaskPhone(d.ContactNo),
+                Latitude = isAdmin ? d.Latitude : PrivacyHelper.Approximate(d.Latitude),
+                Longitude = isAdmin ? d.Longitude : PrivacyHelper.Approximate(d.Longitude),
+                District = d.District != null ? d.District.Name : "",
+                Thana = d.Thana != null ? d.Thana.Name : "",
+                LastDonation = d.LastDonationDate != null ? d.LastDonationDate.Value.ToString("yyyy-MM-dd") : "",
+                Eligible = e.IsEligible && d.IsAvailable
+            };
+        });
 
         return Ok(donors);
     }
@@ -46,7 +109,7 @@ public class MapDataController : ControllerBase
         var requests = await _context.BloodRequests
             .Include(r => r.District)
             .Include(r => r.Thana)
-            .Where(r => r.Status == RequestStatus.Pending && r.Latitude.HasValue && r.Longitude.HasValue)
+            .Where(r => (r.Status == RequestStatus.Pending || r.Status == RequestStatus.DonorMatched) && r.Latitude.HasValue && r.Longitude.HasValue)
             .Select(r => new
             {
                 r.BloodRequestId,

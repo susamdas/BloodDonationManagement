@@ -30,14 +30,27 @@ builder.Services.AddRazorPages();
 builder.Services.AddSignalR();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
+// Smart Donor Matching & eligibility (settings in the "Matching" section of appsettings.json)
+builder.Services.Configure<MatchingOptions>(builder.Configuration.GetSection(MatchingOptions.SectionName));
+builder.Services.AddScoped<EligibilityService>();
+builder.Services.AddScoped<DonorMatchingService>();
+builder.Services.AddScoped<NotificationService>();
+
 var app = builder.Build();
 
-// Seed Bangladesh districts and thanas on startup
+// Create/upgrade the database, then seed master data (and demo data if enabled)
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await context.Database.MigrateAsync();
     await DataSeeder.SeedAsync(context);
     await RoleSeeder.SeedAsync(scope.ServiceProvider);
+
+    if (app.Configuration.GetValue<bool>("SeedDemoData"))
+    {
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        await DemoDataSeeder.SeedAsync(context, userManager);
+    }
 }
 
 if (app.Environment.IsDevelopment())

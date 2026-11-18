@@ -1,0 +1,89 @@
+@model List<RequestReport>
+@{
+    ViewData["Title"] = "Reported Requests";
+    Layout = "~/Views/Shared/_MainLayout.cshtml";
+    var reporters = (Dictionary<string, string>)ViewBag.Reporters;
+    var showAll = (string?)ViewBag.Show == "all";
+}
+
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
+        <div>
+            <h1 class="h3 mb-0"><i class="fas fa-flag text-danger me-2"></i>Reported Requests</h1>
+            <div class="text-muted small">Users flag requests that look fake or ask for money. Review each one and decide.</div>
+        </div>
+        <div class="btn-group btn-group-sm">
+            <a asp-action="Reports" class="btn @(showAll ? "btn-outline-danger" : "btn-danger")">Open</a>
+            <a asp-action="Reports" asp-route-show="all" class="btn @(showAll ? "btn-danger" : "btn-outline-danger")">All</a>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center text-muted py-5">
+                <i class="fas fa-shield-heart fa-2x text-success mb-2"></i>
+                <p class="mb-0">No @(showAll ? "" : "open ")reports. Everything looks clean.</p>
+            </div>
+        </div>
+    }
+
+    @foreach (var group in Model.GroupBy(r => r.BloodRequestId))
+    {
+        var req = group.First().BloodRequest!;
+        var open = group.Any(r => r.Status == ReportStatus.Open);
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-3 align-items-start">
+                    <div class="bg-badge">@req.BloodGroup</div>
+                    <div class="flex-grow-1">
+                        <a asp-controller="BloodRequest" asp-action="Details" asp-route-id="@req.BloodRequestId" class="fw-semibold text-decoration-none">
+                            #@req.BloodRequestId · @req.PatientName
+                        </a>
+                        @if (req.IsVerified) { <span class="badge bg-primary ms-1">Verified</span> }
+                        <span class="badge bg-light text-dark border ms-1">@req.Status</span>
+                        <div class="small text-muted">@(req.HospitalName ?? "No hospital") · @req.District?.Name · posted @req.CreatedDate.ToString("dd MMM, hh:mm tt")</div>
+                        @if (!string.IsNullOrWhiteSpace(req.Message))
+                        {
+                            <div class="small fst-italic mt-1">"@req.Message"</div>
+                        }
+
+                        <ul class="list-unstyled small mt-3 mb-0">
+                            @foreach (var rep in group)
+                            {
+                                <li class="mb-2">
+                                    <span class="badge @(rep.Reason == "Asking for money" ? "bg-danger" : "bg-warning text-dark")">@rep.Reason</span>
+                                    <span class="text-muted ms-1">by @(reporters.GetValueOrDefault(rep.ReporterUserId) ?? "unknown") · @rep.CreatedAt.ToString("dd MMM, hh:mm tt")</span>
+                                    @if (rep.Status != ReportStatus.Open) { <span class="badge bg-light text-dark border ms-1">@rep.Status</span> }
+                                    @if (!string.IsNullOrWhiteSpace(rep.Details)) { <div class="ms-1 mt-1">“@rep.Details”</div> }
+                                </li>
+                            }
+                        </ul>
+                    </div>
+
+                    @if (open)
+                    {
+                        var firstOpen = group.First(r => r.Status == ReportStatus.Open);
+                        <div class="d-flex flex-column gap-2" style="min-width:170px">
+                            <form asp-action="ResolveReport" method="post" onsubmit="return confirm('Close this request and resolve the reports?');">
+                                <input type="hidden" name="id" value="@firstOpen.RequestReportId" />
+                                <input type="hidden" name="decision" value="remove" />
+                                <button class="btn btn-sm btn-danger w-100"><i class="fas fa-ban me-1"></i>Remove request</button>
+                            </form>
+                            <form asp-action="ResolveReport" method="post">
+                                <input type="hidden" name="id" value="@firstOpen.RequestReportId" />
+                                <input type="hidden" name="decision" value="verify" />
+                                <button class="btn btn-sm btn-outline-primary w-100"><i class="fas fa-check-circle me-1"></i>Genuine — verify</button>
+                            </form>
+                            <form asp-action="ResolveReport" method="post">
+                                <input type="hidden" name="id" value="@firstOpen.RequestReportId" />
+                                <input type="hidden" name="decision" value="dismiss" />
+                                <button class="btn btn-sm btn-outline-secondary w-100">Dismiss</button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>

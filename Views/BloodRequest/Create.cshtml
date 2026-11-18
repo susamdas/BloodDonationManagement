@@ -1,4 +1,4 @@
-@model BloodDonationManagement.Models.BloodRequest
+﻿@model BloodDonationManagement.Models.BloodRequest
 @{
     ViewData["Title"] = "Request Blood";
     Layout = "~/Views/Shared/_MainLayout.cshtml";
@@ -46,6 +46,15 @@
                 </div>
                 <div class="card-body">
                     <form asp-action="Create" method="post" class="row g-3">
+                        <div asp-validation-summary="ModelOnly" class="col-12 text-danger small"></div>
+                        <div class="col-12">
+                            <div class="alert alert-light border small mb-0">
+                                <i class="fas fa-wand-magic-sparkles text-danger me-1"></i>
+                                After you submit, <b>Smart Matching</b> ranks eligible donors by compatibility, distance and readiness
+                                and alerts the best matches instantly. Add the hospital location (GPS) for the most accurate ranking.
+                                <br /><i class="fas fa-shield-alt text-warning me-1"></i><b>Blood is free</b> — never pay anyone for blood.
+                            </div>
+                        </div>
                         <input asp-for="Urgency" type="hidden" id="urgencyInput" value="0" />
 
                         <div class="col-md-6">
@@ -96,27 +105,51 @@
                             <input asp-for="HospitalName" class="form-control" placeholder="e.g. Dhaka Medical College Hospital" />
                         </div>
 
+                        <div class="col-md-6">
+                            <label asp-for="UnitsNeeded" class="form-label fw-semibold"></label>
+                            <input asp-for="UnitsNeeded" type="number" min="1" max="10" class="form-control" />
+                            <span asp-validation-for="UnitsNeeded" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="NeededBy" class="form-label fw-semibold"></label>
+                            <input asp-for="NeededBy" type="datetime-local" class="form-control" />
+                            <span asp-validation-for="NeededBy" class="text-danger small"></span>
+                            <div class="form-text">The request closes automatically after this time.</div>
+                        </div>
+
                         <div class="col-12">
                             <label asp-for="Message" class="form-label fw-semibold">Additional Message</label>
                             <textarea asp-for="Message" class="form-control" rows="3"
                                       placeholder="Any additional details about the patient or situation..."></textarea>
                         </div>
 
-                        <!-- GPS Location -->
+                        <!-- Hospital location: map picker -->
                         <div class="col-12">
-                            <div class="d-flex align-items-center gap-3">
+                            <label class="form-label fw-semibold mb-1"><i class="fas fa-map-pin text-danger me-1"></i>Hospital location</label>
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
                                 <button type="button" id="gpsBtn" class="btn btn-outline-secondary btn-sm">
-                                    <i class="fas fa-location-arrow me-1"></i>Use GPS Location
+                                    <i class="fas fa-location-arrow me-1"></i>Use my GPS location
                                 </button>
-                                <span id="gpsStatus" class="small text-muted"></span>
+                                <span class="small text-muted">or click on the map to place the hospital pin</span>
+                                <span id="gpsStatus" class="small text-success ms-auto"></span>
                             </div>
-                            <div class="row mt-2" id="gpsFields" style="display:none!important">
+                            <div id="pickMap" class="rounded border" style="height:280px"></div>
+                            <div class="row g-2 mt-1">
                                 <div class="col-6">
                                     <input asp-for="Latitude" class="form-control form-control-sm" readonly placeholder="Latitude" />
                                 </div>
                                 <div class="col-6">
                                     <input asp-for="Longitude" class="form-control form-control-sm" readonly placeholder="Longitude" />
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Live Smart Matching preview -->
+                        <div class="col-12">
+                            <div id="matchPreview" class="alert alert-light border small mb-0">
+                                <i class="fas fa-wand-magic-sparkles text-danger me-1"></i>
+                                Choose a blood group and location to preview how many donors Smart Matching will find.
                             </div>
                         </div>
 
@@ -137,6 +170,7 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/mapkit.js" asp-append-version="true"></script>
     <script>
         // Urgency card selection
         var urgencyColors = { 0: '#198754', 1: '#fd7e14', 2: '#dc3545' };
@@ -187,22 +221,81 @@
                 }));
         });
 
-        // GPS
+        // ---------------- Map picker + live matching preview
+        var pickMap = null, pin = null, ring = null;
+        var latEl = document.getElementById('Latitude'), lngEl = document.getElementById('Longitude');
+        var radiusByUrgency = { 0: 10, 1: 15, 2: 25 };
+
+        function setPin(lat, lng) {
+            latEl.value = lat.toFixed(6);
+            lngEl.value = lng.toFixed(6);
+            if (!pickMap) return;
+            if (pin) pin.remove();
+            if (ring) ring.remove();
+            pin = pickMap.marker(lat, lng, { color: '#dc3545', size: 12, label: '+', html: '<b>Hospital</b>' });
+            ring = pickMap.circle(lat, lng, radiusByUrgency[document.getElementById('urgencyInput').value] || 10);
+            document.getElementById('gpsStatus').textContent = '✓ Location set';
+            refreshPreview();
+        }
+
+        MapKit.create('pickMap', { center: [23.78, 90.40], zoom: 11 }).then(function (m) {
+            pickMap = m;
+            pickMap.onClick(function (lat, lng) { setPin(lat, lng); });
+            if (latEl.value && lngEl.value) {
+                setPin(parseFloat(latEl.value), parseFloat(lngEl.value));
+                pickMap.setView(parseFloat(latEl.value), parseFloat(lngEl.value), 13);
+            }
+        });
+
         document.getElementById('gpsBtn').addEventListener('click', function () {
+            var btn = this;
             if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
-            this.disabled = true;
-            this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Getting location...';
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Getting location...';
             navigator.geolocation.getCurrentPosition(function (pos) {
-                document.getElementById('Latitude').value = pos.coords.latitude.toFixed(6);
-                document.getElementById('Longitude').value = pos.coords.longitude.toFixed(6);
-                document.getElementById('gpsFields').style.removeProperty('display');
-                document.getElementById('gpsStatus').textContent = '✓ Location captured';
-                document.getElementById('gpsBtn').innerHTML = '<i class="fas fa-check me-1"></i>Location set';
+                setPin(pos.coords.latitude, pos.coords.longitude);
+                if (pickMap) pickMap.setView(pos.coords.latitude, pos.coords.longitude, 14);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-location-arrow me-1"></i>Use my GPS location';
             }, function () {
-                document.getElementById('gpsBtn').disabled = false;
-                document.getElementById('gpsBtn').innerHTML = '<i class="fas fa-location-arrow me-1"></i>Use GPS Location';
-                document.getElementById('gpsStatus').textContent = 'Could not get location.';
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-location-arrow me-1"></i>Use my GPS location';
+                document.getElementById('gpsStatus').textContent = 'Could not get location — click the map instead.';
             });
         });
+
+        var previewTimer = null;
+        function refreshPreview() {
+            clearTimeout(previewTimer);
+            previewTimer = setTimeout(function () {
+                var bg = document.getElementById('bloodGroupInput').value;
+                var box = document.getElementById('matchPreview');
+                if (!bg) return;
+                var q = new URLSearchParams({
+                    bloodGroup: bg,
+                    urgency: document.getElementById('urgencyInput').value || '0',
+                    districtId: document.getElementById('DistrictSel').value || '',
+                    thanaId: document.getElementById('ThanaSel').value || '',
+                    lat: latEl.value || '', lng: lngEl.value || ''
+                });
+                fetch('/api/MapData/match-preview?' + q.toString())
+                    .then(function (r) { return r.json(); })
+                    .then(function (p) {
+                        if (ring) ring.setRadius(p.radiusKm);
+                        var cls = p.matched === 0 ? 'alert-warning' : 'alert-success';
+                        box.className = 'alert ' + cls + ' border small mb-0';
+                        box.innerHTML = '<i class="fas fa-wand-magic-sparkles me-1"></i><b>' + p.matched + '</b> eligible ' +
+                            MapKit.esc(bg) + '-compatible donor(s) found' +
+                            (p.hasLocation ? ' within <b>' + p.radiusKm + ' km</b>' : ' in the selected area') +
+                            (p.expanded ? ' (radius widened automatically)' : '') +
+                            (p.matched ? ' · best match <b>' + p.bestScore + '%</b>. The top ' + p.notifyTopN + ' will be alerted when you submit.' : '. Try a wider area or Critical urgency.') +
+                            (!p.hasLocation ? '<div class="text-muted mt-1">Tip: set the hospital pin for distance-based ranking.</div>' : '');
+                    }).catch(function () { });
+            }, 300);
+        }
+        document.querySelectorAll('.bg-btn, .urgency-card').forEach(function (el) { el.addEventListener('click', function () { setTimeout(refreshPreview, 0); }); });
+        document.getElementById('DistrictSel').addEventListener('change', refreshPreview);
+        document.getElementById('ThanaSel').addEventListener('change', refreshPreview);
+        if (existingBg) refreshPreview();
     </script>
 }

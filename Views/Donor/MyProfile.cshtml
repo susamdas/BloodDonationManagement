@@ -1,0 +1,177 @@
+@model BloodDonationManagement.ViewModels.MyDonorProfileViewModel
+@{
+    ViewData["Title"] = "My Donor Profile";
+    Layout = "~/Views/Shared/_MainLayout.cshtml";
+    var d = Model.Donor;
+    var e = Model.Eligibility;
+    // Progress through the rest period (100% = eligible)
+    var pct = e.IsEligible ? 100 : (int)Math.Round(100.0 * (e.CooldownDays - e.DaysRemaining) / e.CooldownDays);
+    var ringColor = e.IsEligible ? "#198754" : "#fd7e14";
+}
+
+<div class="container py-4">
+    <div class="row g-4">
+        <!-- Left: identity + eligibility -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body text-center">
+                    <div class="bg-badge mx-auto mb-2" style="width:64px;height:64px;font-size:1.4rem">@d.BloodGroup</div>
+                    <h1 class="h4 mb-0">@d.FullName</h1>
+                    <div class="text-muted small mb-3">
+                        @d.Gender · @(d.Thana?.Name)@(d.Thana != null ? ", " : "")@(d.District?.Name ?? "Location not set")
+                    </div>
+
+                    <div class="elig-ring mb-3" style="--p:@pct;--c:@ringColor">
+                        <div>
+                            @if (e.IsEligible)
+                            {
+                                <i class="fas fa-heart-pulse text-success fa-lg mb-1"></i>
+                                <strong class="text-success">Eligible</strong>
+                                <small class="text-muted">to donate today</small>
+                            }
+                            else
+                            {
+                                <strong class="fs-3">@e.DaysRemaining</strong>
+                                <small class="text-muted">days to rest</small>
+                            }
+                        </div>
+                    </div>
+                    @if (!e.IsEligible)
+                    {
+                        <p class="small mb-3">You can donate again on <b>@e.NextEligibleDate?.ToString("dd MMM yyyy")</b>.<br />
+                            <span class="text-muted">Rest period for @d.Gender.ToString().ToLower() donors: @e.CooldownDays days.</span></p>
+                    }
+                    else if (e.DaysSinceLastDonation.HasValue)
+                    {
+                        <p class="small text-muted mb-3">Last donation @e.DaysSinceLastDonation days ago.</p>
+                    }
+
+                    <form asp-action="ToggleAvailability" method="post" class="mb-2">
+                        @if (d.IsAvailable)
+                        {
+                            <button class="btn btn-success w-100"><i class="fas fa-toggle-on me-1"></i>Available for alerts</button>
+                            <div class="small text-muted mt-1">Tap to pause alerts (travel, illness…)</div>
+                        }
+                        else
+                        {
+                            <button class="btn btn-outline-secondary w-100"><i class="fas fa-toggle-off me-1"></i>Alerts paused</button>
+                            <div class="small text-muted mt-1">Tap to start receiving requests again</div>
+                        }
+                    </form>
+                    <a asp-action="Edit" asp-route-id="@d.DonorId" class="btn btn-link btn-sm"><i class="fas fa-edit me-1"></i>Edit profile</a>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body small">
+                    <h2 class="h6 text-uppercase text-muted mb-2"><i class="fas fa-user-shield me-2"></i>Your privacy</h2>
+                    <ul class="mb-0 ps-3">
+                        <li>Your number appears as <code>@BloodDonationManagement.Services.PrivacyHelper.MaskPhone(d.ContactNo)</code> to others.</li>
+                        <li>A requester sees your full number <b>only after you accept</b> their request.</li>
+                        <li>Your map position is shown only approximately.</li>
+                        <li>Profile is @(d.IsHidden ? "hidden from" : "visible in") public search.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: stats, alerts, history -->
+        <div class="col-lg-8">
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-md-3"><div class="stat-tile shadow-sm"><div class="num text-danger">@Model.TotalDonations</div><div class="lbl">Donations</div></div></div>
+                <div class="col-6 col-md-3"><div class="stat-tile shadow-sm"><div class="num">@(Model.TotalDonations * 3)</div><div class="lbl">Lives helped*</div></div></div>
+                <div class="col-6 col-md-3"><div class="stat-tile shadow-sm"><div class="num">@Model.TimesNotified</div><div class="lbl">Alerts received</div></div></div>
+                <div class="col-6 col-md-3"><div class="stat-tile shadow-sm"><div class="num text-success">@(Model.TimesNotified == 0 ? "—" : Model.ResponseRate + "%")</div><div class="lbl">Response rate</div></div></div>
+            </div>
+
+            <!-- Requests waiting for my answer -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h5 mb-3"><i class="fas fa-bell text-danger me-2"></i>Requests waiting for your answer
+                        <span class="badge bg-danger">@Model.PendingRequests.Count</span></h2>
+                    @if (!Model.PendingRequests.Any())
+                    {
+                        <p class="text-muted mb-0">No pending alerts. We'll notify you when a patient nearby needs your blood group.</p>
+                    }
+                    else
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var p in Model.PendingRequests)
+                            {
+                                var br = p.BloodRequest!;
+                                <a href="@Url.Action("Details", "BloodRequest", new { id = br.BloodRequestId })"
+                                   class="list-group-item list-group-item-action px-0 d-flex align-items-center gap-3">
+                                    <div class="bg-badge">@br.BloodGroup</div>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-semibold">@(br.HospitalName ?? br.PatientName)</div>
+                                        <div class="small text-muted">@br.Urgency · @br.District?.Name · You are a @p.MatchScore.ToString("0")% match</div>
+                                    </div>
+                                    <span class="btn btn-sm btn-danger">Respond</span>
+                                </a>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Donation history -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h5 mb-3"><i class="fas fa-history text-danger me-2"></i>Donation history</h2>
+                    @if (!Model.Donations.Any())
+                    {
+                        <p class="text-muted mb-0">No donations recorded yet. Your first donation will appear here.</p>
+                    }
+                    else
+                    {
+                        <ul class="timeline list-unstyled mb-0">
+                            @foreach (var don in Model.Donations)
+                            {
+                                <li class="tl-success">
+                                    <div class="tl-dot"><i class="fas fa-tint"></i></div>
+                                    <div>
+                                        <div class="fw-semibold small">@don.DonationDate.ToString("dd MMM yyyy")</div>
+                                        <div class="small text-muted">
+                                            @(don.HospitalName ?? "Hospital not recorded")
+                                            @if (don.BloodRequest != null)
+                                            {
+                                                <span>· via <a asp-controller="BloodRequest" asp-action="Details" asp-route-id="@don.BloodRequestId">BloodConnect request</a></span>
+                                            }
+                                        </div>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+
+            <!-- Recent alerts -->
+            @if (Model.Responses.Any())
+            {
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h2 class="h6 text-uppercase text-muted mb-3">Recent alerts</h2>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead><tr><th>Date</th><th>Request</th><th>Match</th><th>Your answer</th></tr></thead>
+                                <tbody>
+                                    @foreach (var x in Model.Responses)
+                                    {
+                                        <tr>
+                                            <td class="small">@x.NotifiedAt.ToString("dd MMM")</td>
+                                            <td class="small"><a asp-controller="BloodRequest" asp-action="Details" asp-route-id="@x.BloodRequestId">@x.BloodRequest?.BloodGroup · @(x.BloodRequest?.HospitalName ?? x.BloodRequest?.PatientName)</a></td>
+                                            <td class="small">@x.MatchScore.ToString("0")%</td>
+                                            <td class="small">@x.Status</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
+            <p class="small text-muted mt-2">* One whole-blood donation can help up to three patients.</p>
+        </div>
+    </div>
+</div>

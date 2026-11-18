@@ -44,8 +44,14 @@ namespace BloodDonationManagement.Migrations
                     b.Property<int?>("DistrictId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("FulfilledAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("HospitalName")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("bit");
 
                     b.Property<double?>("Latitude")
                         .HasColumnType("float");
@@ -57,14 +63,24 @@ namespace BloodDonationManagement.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("NeededBy")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("PatientName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RequesterUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.Property<int?>("ThanaId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UnitsNeeded")
                         .HasColumnType("int");
 
                     b.Property<int>("Urgency")
@@ -96,6 +112,39 @@ namespace BloodDonationManagement.Migrations
                     b.ToTable("Districts");
                 });
 
+            modelBuilder.Entity("BloodDonationManagement.Models.Donation", b =>
+                {
+                    b.Property<int>("DonationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DonationId"));
+
+                    b.Property<int?>("BloodRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("DonationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DonorId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("HospitalName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("Units")
+                        .HasColumnType("int");
+
+                    b.HasKey("DonationId");
+
+                    b.HasIndex("BloodRequestId");
+
+                    b.HasIndex("DonorId");
+
+                    b.ToTable("Donations");
+                });
+
             modelBuilder.Entity("BloodDonationManagement.Models.Donor", b =>
                 {
                     b.Property<int>("DonorId")
@@ -112,6 +161,9 @@ namespace BloodDonationManagement.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<int?>("DistrictId")
                         .HasColumnType("int");
 
@@ -119,6 +171,15 @@ namespace BloodDonationManagement.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("Gender")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsAvailable")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsHidden")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime?>("LastDonationDate")
                         .HasColumnType("datetime2");
@@ -135,13 +196,148 @@ namespace BloodDonationManagement.Migrations
                     b.Property<int?>("ThanaId")
                         .HasColumnType("int");
 
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("DonorId");
 
                     b.HasIndex("DistrictId");
 
                     b.HasIndex("ThanaId");
 
+                    b.HasIndex("UserId");
+
                     b.ToTable("Donors");
+                });
+
+            modelBuilder.Entity("BloodDonationManagement.Models.DonorResponse", b =>
+                {
+                    b.Property<int>("DonorResponseId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DonorResponseId"));
+
+                    b.Property<int>("BloodRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ConfirmedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double?>("DistanceKm")
+                        .HasColumnType("float");
+
+                    b.Property<int>("DonorId")
+                        .HasColumnType("int");
+
+                    b.Property<double>("MatchScore")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<DateTime>("NotifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("RespondedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("DonorResponseId");
+
+                    b.HasIndex("DonorId");
+
+                    b.HasIndex("BloodRequestId", "DonorId")
+                        .IsUnique();
+
+                    b.ToTable("DonorResponses");
+                });
+
+            modelBuilder.Entity("BloodDonationManagement.Models.Notification", b =>
+                {
+                    b.Property<int>("NotificationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("NotificationId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Link")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("NotificationId");
+
+                    b.HasIndex("UserId", "IsRead");
+
+                    b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("BloodDonationManagement.Models.RequestReport", b =>
+                {
+                    b.Property<int>("RequestReportId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RequestReportId"));
+
+                    b.Property<int>("BloodRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Details")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ReporterUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("RequestReportId");
+
+                    b.HasIndex("BloodRequestId");
+
+                    b.ToTable("RequestReports");
                 });
 
             modelBuilder.Entity("BloodDonationManagement.Models.Thana", b =>
@@ -383,6 +579,24 @@ namespace BloodDonationManagement.Migrations
                     b.Navigation("Thana");
                 });
 
+            modelBuilder.Entity("BloodDonationManagement.Models.Donation", b =>
+                {
+                    b.HasOne("BloodDonationManagement.Models.BloodRequest", "BloodRequest")
+                        .WithMany()
+                        .HasForeignKey("BloodRequestId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("BloodDonationManagement.Models.Donor", "Donor")
+                        .WithMany("Donations")
+                        .HasForeignKey("DonorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BloodRequest");
+
+                    b.Navigation("Donor");
+                });
+
             modelBuilder.Entity("BloodDonationManagement.Models.Donor", b =>
                 {
                     b.HasOne("BloodDonationManagement.Models.District", "District")
@@ -398,6 +612,36 @@ namespace BloodDonationManagement.Migrations
                     b.Navigation("District");
 
                     b.Navigation("Thana");
+                });
+
+            modelBuilder.Entity("BloodDonationManagement.Models.DonorResponse", b =>
+                {
+                    b.HasOne("BloodDonationManagement.Models.BloodRequest", "BloodRequest")
+                        .WithMany("Responses")
+                        .HasForeignKey("BloodRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BloodDonationManagement.Models.Donor", "Donor")
+                        .WithMany("Responses")
+                        .HasForeignKey("DonorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BloodRequest");
+
+                    b.Navigation("Donor");
+                });
+
+            modelBuilder.Entity("BloodDonationManagement.Models.RequestReport", b =>
+                {
+                    b.HasOne("BloodDonationManagement.Models.BloodRequest", "BloodRequest")
+                        .WithMany()
+                        .HasForeignKey("BloodRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BloodRequest");
                 });
 
             modelBuilder.Entity("BloodDonationManagement.Models.Thana", b =>
@@ -462,11 +706,23 @@ namespace BloodDonationManagement.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("BloodDonationManagement.Models.BloodRequest", b =>
+                {
+                    b.Navigation("Responses");
+                });
+
             modelBuilder.Entity("BloodDonationManagement.Models.District", b =>
                 {
                     b.Navigation("Donors");
 
                     b.Navigation("Thanas");
+                });
+
+            modelBuilder.Entity("BloodDonationManagement.Models.Donor", b =>
+                {
+                    b.Navigation("Donations");
+
+                    b.Navigation("Responses");
                 });
 
             modelBuilder.Entity("BloodDonationManagement.Models.Thana", b =>

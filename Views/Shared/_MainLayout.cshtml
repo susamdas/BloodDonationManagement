@@ -1,3 +1,11 @@
+﻿@inject Microsoft.Extensions.Configuration.IConfiguration Config
+@inject BloodDonationManagement.Data.ApplicationDbContext Db
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@{
+    var isAdmin = User.IsInRole("Admin");
+    var openReports = isAdmin ? Db.RequestReports.Count(r => r.Status == ReportStatus.Open) : 0;
+    var csrf = User.Identity?.IsAuthenticated == true ? Antiforgery.GetAndStoreTokens(Context).RequestToken : null;
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,7 +14,12 @@
     <title>@ViewData["Title"] - BloodConnect BD</title>
     <link rel="icon" type="image/x-icon" href="@Url.Content("~/bloodico.ico")" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet" />
+    <link href="~/css/app.css" rel="stylesheet" asp-append-version="true" />
+    <script>
+        window.APP_MAPS_KEY = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Config["GoogleMaps:ApiKey"] ?? ""));
+        window.APP_CSRF = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(csrf ?? ""));
+    </script>
     <style>
         :root {
             --primary: #dc3545;
@@ -46,6 +59,12 @@
             font-size: 11px; display: none; align-items: center; justify-content: center;
         }
         /* Toast container */
+        .notif-menu { width: 340px; max-width: 92vw; }
+        #notifList { max-height: 380px; overflow-y: auto; }
+        .notif-item { display: flex; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #f1f3f5; color: inherit; text-decoration: none; }
+        .notif-item:hover { background: #f8f9fa; }
+        .notif-item.unread { background: #fff5f5; }
+        .notif-time { font-size: .7rem; color: #adb5bd; }
         #toastArea { position: fixed; bottom: 24px; right: 24px; z-index: 9999; width: 340px; }
         .blood-toast {
             background: white; border-left: 4px solid var(--primary);
@@ -96,25 +115,71 @@
                             <i class="fas fa-map-marked-alt me-1"></i>Live Map
                         </a>
                     </li>
-                    @if (User.IsInRole("Admin"))
+                    @if (isAdmin)
                     {
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="District" asp-action="Index">
-                                <i class="fas fa-location-arrow me-1"></i>Locations
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-shield me-1"></i>Admin
+                                @if (openReports > 0)
+                                {
+                                    <span class="badge bg-danger rounded-pill ms-1">@openReports</span>
+                                }
                             </a>
+                            <ul class="dropdown-menu shadow-sm">
+                                <li><a class="dropdown-item" asp-controller="Admin" asp-action="Dashboard"><i class="fas fa-chart-line me-2 text-danger"></i>Analytics Dashboard</a></li>
+                                <li><a class="dropdown-item" asp-controller="Admin" asp-action="Users"><i class="fas fa-users-cog me-2 text-danger"></i>User Management</a></li>
+                                <li>
+                                    <a class="dropdown-item d-flex justify-content-between align-items-center" asp-controller="Admin" asp-action="Reports">
+                                        <span><i class="fas fa-flag me-2 text-danger"></i>Reported Requests</span>
+                                        @if (openReports > 0) { <span class="badge bg-danger rounded-pill">@openReports</span> }
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li><a class="dropdown-item" asp-controller="District" asp-action="Index"><i class="fas fa-location-arrow me-2 text-danger"></i>Locations</a></li>
+                            </ul>
                         </li>
                     }
                 </ul>
                 <ul class="navbar-nav align-items-center">
                     <!-- Notification Bell -->
-                    <li class="nav-item me-2">
-                        <div class="notif-bell nav-link" id="notifBell" title="Live alerts">
+                    <li class="nav-item dropdown me-2">
+                        <a class="notif-bell nav-link" id="notifBell" href="#" role="button" data-bs-toggle="dropdown"
+                           data-bs-auto-close="outside" aria-expanded="false" aria-label="Notifications">
                             <i class="fas fa-bell fa-lg"></i>
                             <span class="notif-count" id="notifCount">0</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end shadow p-0 notif-menu">
+                            <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                                <strong>Notifications</strong>
+                                <small class="text-muted" id="notifHint">Live</small>
+                            </div>
+                            <div id="notifList">
+                                @if (User.Identity?.IsAuthenticated == true)
+                                {
+                                    <div class="text-center text-muted small py-4">Loading…</div>
+                                }
+                                else
+                                {
+                                    <div class="text-center text-muted small py-4 px-3">
+                                        <a href="@Url.Page("/Account/Login", new { area = "Identity" })">Log in</a> to receive personal alerts when a patient near you needs your blood group.
+                                    </div>
+                                }
+                            </div>
+                            @if (User.Identity?.IsAuthenticated == true)
+                            {
+                                <div class="border-top text-center py-2 small">
+                                    <a asp-controller="Donor" asp-action="MyProfile" class="text-decoration-none">View my donor profile</a>
+                                </div>
+                            }
                         </div>
                     </li>
                     @if (User.Identity?.IsAuthenticated == true)
                     {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Donor" asp-action="MyProfile">
+                                <i class="fas fa-id-card me-1"></i>My Donor Profile
+                            </a>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link" href="@Url.Page("/Account/Manage/Index", new { area = "Identity" })">
                                 <i class="fas fa-user-circle me-1"></i>@(User.Identity?.Name ?? "")
@@ -174,7 +239,7 @@
         @if (TempData["SuccessMessage"] != null)
         {
             <div class="container mt-3">
-                <div class="alert alert-success alert-dismissible fade show">
+                <div class="alert alert-success alert-dismissible fade show flash-alert">
                     <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
@@ -183,7 +248,7 @@
         @if (TempData["ErrorMessage"] != null)
         {
             <div class="container mt-3">
-                <div class="alert alert-danger alert-dismissible fade show">
+                <div class="alert alert-danger alert-dismissible fade show flash-alert">
                     <i class="fas fa-exclamation-circle me-2"></i>@TempData["ErrorMessage"]
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
@@ -192,7 +257,7 @@
         @if (TempData["InfoMessage"] != null)
         {
             <div class="container mt-3">
-                <div class="alert alert-info alert-dismissible fade show">
+                <div class="alert alert-info alert-dismissible fade show flash-alert">
                     <i class="fas fa-info-circle me-2"></i>@TempData["InfoMessage"]
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
@@ -255,7 +320,7 @@
     <script>
         // Auto-dismiss alerts
         setTimeout(function () {
-            document.querySelectorAll('.alert').forEach(function (el) {
+            document.querySelectorAll('.flash-alert').forEach(function (el) {
                 el.style.transition = 'opacity .5s';
                 el.style.opacity = '0';
                 setTimeout(() => el.remove(), 500);
@@ -273,23 +338,102 @@
             });
         })();
 
-        // SignalR real-time notifications
-        var notifCount = 0;
+        // ---------------- Notifications: stored personal alerts (bell) + live SignalR push
+        var isAuthenticated = @((User.Identity?.IsAuthenticated == true).ToString().ToLower());
+        var notifItems = [];
+        var unreadCount = 0;
+
+        function escHtml(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        function setBadge(n) {
+            unreadCount = n;
+            var el = document.getElementById('notifCount');
+            el.textContent = n > 9 ? '9+' : n;
+            el.style.display = n > 0 ? 'flex' : 'none';
+        }
+
+        var typeIcon = { danger: 'fa-triangle-exclamation text-danger', warning: 'fa-circle-exclamation text-warning', success: 'fa-circle-check text-success', info: 'fa-bell text-primary' };
+
+        function renderNotifications() {
+            if (!isAuthenticated) return;
+            var list = document.getElementById('notifList');
+            if (!notifItems.length) {
+                list.innerHTML = '<div class="text-center text-muted small py-4 px-3"><i class="fas fa-bell-slash d-block mb-2"></i>No notifications yet.</div>';
+                return;
+            }
+            list.innerHTML = notifItems.map(function (n) {
+                var tag = n.link ? 'a' : 'div';
+                return '<' + tag + (n.link ? ' href="' + escHtml(n.link) + '"' : '') + ' class="notif-item' + (n.isRead ? '' : ' unread') + '">' +
+                    '<i class="fas ' + (typeIcon[n.type] || typeIcon.info) + ' mt-1"></i>' +
+                    '<div><div class="fw-semibold small">' + escHtml(n.title) + '</div>' +
+                    '<div class="small text-muted">' + escHtml(n.message) + '</div>' +
+                    '<div class="notif-time">' + escHtml(n.createdAt) + '</div></div></' + tag + '>';
+            }).join('');
+        }
+
+        function loadNotifications() {
+            if (!isAuthenticated) return;
+            fetch('/api/notifications', { headers: { 'Accept': 'application/json' } })
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (d) {
+                    if (!d) return;
+                    notifItems = d.items; setBadge(d.unread); renderNotifications();
+                }).catch(function () { });
+        }
+
+        function markAllRead() {
+            if (!isAuthenticated || unreadCount === 0) return;
+            fetch('/api/notifications/read-all', { method: 'POST', headers: { 'RequestVerificationToken': window.APP_CSRF } })
+                .then(function () { setBadge(0); });
+        }
+
+        // Opening the bell marks everything as read (the list keeps highlighting until next load)
+        document.getElementById('notifBell').addEventListener('shown.bs.dropdown', markAllRead);
+
+        function showToast(title, body, cls, link) {
+            var html = '<div class="blood-toast ' + (cls || '') + '">' +
+                '<div class="d-flex justify-content-between align-items-start">' +
+                '<strong>' + title + '</strong>' +
+                '<button onclick="this.closest(\'.blood-toast\').remove()" class="btn-close btn-sm ms-2" aria-label="Close"></button>' +
+                '</div><div class="mt-1 small">' + body + '</div>' +
+                (link ? '<a class="small" href="' + escHtml(link) + '">Open</a>' : '') + '</div>';
+            var area = document.getElementById('toastArea');
+            area.insertAdjacentHTML('afterbegin', html);
+            var toast = area.firstElementChild;
+            setTimeout(function () {
+                toast.style.animation = 'slideOut .3s ease forwards';
+                setTimeout(function () { if (toast.parentNode) toast.remove(); }, 300);
+            }, 9000);
+        }
+
         var connection = new signalR.HubConnectionBuilder()
             .withUrl("/notificationHub")
             .withAutomaticReconnect()
             .build();
 
+        // Personal notification (e.g. "you are a 92% match", "a donor accepted")
+        connection.on("Notify", function (n) {
+            notifItems.unshift({ id: n.id, title: n.title, message: n.message, link: n.link, type: n.type, isRead: false, createdAt: n.createdAt });
+            notifItems = notifItems.slice(0, 15);
+            setBadge(unreadCount + 1);
+            renderNotifications();
+            var cls = n.type === 'danger' ? 'critical' : (n.type === 'warning' ? 'urgent' : '');
+            showToast('<i class="fas fa-bell me-1"></i>' + escHtml(n.title), escHtml(n.message), cls, n.link);
+        });
+
+        // Public feed: new request in the district the user follows
         connection.on("NewBloodRequest", function (data) {
-            notifCount++;
-            var countEl = document.getElementById('notifCount');
-            countEl.textContent = notifCount;
-            countEl.style.display = 'flex';
-            showBloodToast(data);
+            var cls = data.urgency === 'Critical' ? 'critical' : (data.urgency === 'Urgent' ? 'urgent' : '');
+            showToast(escHtml(data.urgency) + ' Blood Request',
+                '<span class="badge bg-danger me-1">' + escHtml(data.bloodGroup) + '</span>' + escHtml(data.hospital || data.district),
+                cls, '/BloodRequest/Details/' + data.bloodRequestId);
         });
 
         connection.start().then(function () {
-            // Join the district group stored in localStorage (set on BloodRequest/Create)
             var districtId = localStorage.getItem('preferredDistrictId');
             if (districtId) {
                 connection.invoke("JoinDistrictGroup", districtId)
@@ -297,38 +441,7 @@
             }
         }).catch(function (err) { console.warn("SignalR:", err); });
 
-        function showBloodToast(data) {
-            var urgencyClass = data.urgency === 'Critical' ? 'critical' : (data.urgency === 'Urgent' ? 'urgent' : '');
-            var urgencyIcon = data.urgency === 'Critical'
-                ? '<i class="fas fa-exclamation-triangle text-danger me-1"></i>'
-                : (data.urgency === 'Urgent' ? '<i class="fas fa-exclamation-circle text-warning me-1"></i>' : '');
-            var html = '<div class="blood-toast ' + urgencyClass + '">' +
-                '<div class="d-flex justify-content-between align-items-start">' +
-                '<strong>' + urgencyIcon + data.urgency + ' Blood Request</strong>' +
-                '<button onclick="this.closest(\'.blood-toast\').remove()" class="btn-close btn-sm ms-2"></button>' +
-                '</div>' +
-                '<div class="mt-1"><span class="badge bg-danger me-1">' + data.bloodGroup + '</span>' +
-                data.patientName + '</div>' +
-                '<small class="text-muted">' + (data.hospital || data.district) + '</small>' +
-                '</div>';
-
-            var area = document.getElementById('toastArea');
-            area.insertAdjacentHTML('afterbegin', html);
-
-            var toast = area.firstElementChild;
-            setTimeout(function () {
-                toast.style.animation = 'slideOut .3s ease forwards';
-                setTimeout(function () { if (toast.parentNode) toast.remove(); }, 300);
-            }, 8000);
-        }
-
-        // Reset bell count on click
-        document.getElementById('notifBell').addEventListener('click', function () {
-            notifCount = 0;
-            var el = document.getElementById('notifCount');
-            el.textContent = '0';
-            el.style.display = 'none';
-        });
+        loadNotifications();
     </script>
 
     @RenderSection("Scripts", required: false)

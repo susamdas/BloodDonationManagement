@@ -1,0 +1,103 @@
+/* ===== BloodConnect BD — shared component styles ===== */
+
+/* Request header */
+.request-hero { position: relative; }
+.request-hero.bg-warning { color: #212529 !important; }
+.blood-group-big {
+    width: 88px; height: 88px; border-radius: 50%;
+    background: rgba(255, 255, 255, .95); color: #dc3545;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; font-weight: 800; box-shadow: 0 6px 20px rgba(0, 0, 0, .15);
+}
+.safety-strip { background: #fff4e5; color: #8a4b00; border-top: 1px solid #ffe0b2; }
+
+/* Small blood group badge */
+.bg-badge {
+    min-width: 44px; height: 44px; border-radius: 12px; padding: 0 6px;
+    background: #fdecee; color: #dc3545; font-weight: 800;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.bg-badge.sm { min-width: 34px; height: 26px; border-radius: 8px; font-size: .8rem; }
+
+/* Timeline */
+.timeline li { display: flex; gap: 12px; position: relative; padding-bottom: 16px; }
+.timeline li:not(:last-child)::before {
+    content: ""; position: absolute; left: 13px; top: 28px; bottom: 0; width: 2px; background: #e9ecef;
+}
+.tl-dot {
+    flex: 0 0 28px; height: 28px; border-radius: 50%; font-size: .75rem;
+    display: flex; align-items: center; justify-content: center; background: #e9ecef; color: #6c757d;
+}
+.tl-primary .tl-dot { background: #fdecee; color: #dc3545; }
+.tl-info .tl-dot { background: #e7f1ff; color: #0d6efd; }
+.tl-success .tl-dot { background: #e6f4ea; color: #198754; }
+.tl-time { font-size: .72rem; color: #adb5bd; }
+
+/* Matching funnel */
+.match-funnel { display: flex; flex-wrap: wrap; gap: 8px; }
+.match-funnel > div {
+    background: #f8f9fa; border-radius: 10px; padding: 6px 12px; font-size: .78rem; color: #6c757d;
+}
+.match-funnel span { display: block; font-size: 1.1rem; font-weight: 700; color: #212529; }
+.match-funnel .minus span { color: #adb5bd; }
+.match-funnel .result { background: #fdecee; }
+.match-funnel .result span { color: #dc3545; }
+
+/* Ranked donor card */
+.match-card {
+    display: flex; align-items: center; gap: 14px; padding: 12px 14px; margin-bottom: 10px;
+    border: 1px solid #eef0f2; border-radius: 14px; background: #fff; transition: box-shadow .2s, transform .2s;
+}
+.match-card:hover { box-shadow: 0 6px 18px rgba(0, 0, 0, .07); transform: translateY(-1px); }
+.match-card.top { border-color: #f5c2c7; background: linear-gradient(90deg, #fff7f8, #fff); }
+.match-rank { font-weight: 700; color: #adb5bd; width: 28px; text-align: center; }
+.match-card.top .match-rank { color: #dc3545; }
+.min-w-0 { min-width: 0; }
+
+/* Circular score */
+.score-ring {
+    --p: 0;
+    flex: 0 0 62px; width: 62px; height: 62px; border-radius: 50%;
+    background: conic-gradient(#dc3545 calc(var(--p) * 1%), #f1f3f5 0);
+    display: flex; align-items: center; justify-content: center;
+}
+.score-ring span {
+    width: 48px; height: 48px; border-radius: 50%; background: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem;
+}
+.score-ring small { font-size: .6rem; font-weight: 600; }
+
+/* Explanation chips */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: .72rem; padding: 2px 9px; border-radius: 999px; background: #f1f3f5; color: #495057; white-space: nowrap; }
+.chip-good { background: #e6f4ea; color: #146c43; }
+.chip-ok { background: #e7f1ff; color: #0a58ca; }
+.chip-warn { background: #fff3cd; color: #997404; }
+.chip-neutral { background: #f1f3f5; color: #6c757d; }
+.chip-rare { background: #f3e8ff; color: #6f42c1; }
+
+/* Factor bars */
+.factor-bars { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.factor-bars label { display: block; font-size: .65rem; color: #adb5bd; text-transform: uppercase; letter-spacing: .03em; }
+.factor-bars > div > div { height: 5px; background: #f1f3f5; border-radius: 3px; overflow: hidden; }
+.factor-bars i { display: block; height: 100%; background: #dc3545; border-radius: 3px; }
+
+@media (max-width: 576px) {
+    .match-card { flex-wrap: wrap; }
+    .factor-bars { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Eligibility ring on donor profile */
+.elig-ring {
+    --p: 0;
+    width: 140px; height: 140px; border-radius: 50%; margin: auto;
+    background: conic-gradient(var(--c, #198754) calc(var(--p) * 1%), #f1f3f5 0);
+    display: flex; align-items: center; justify-content: center;
+}
+.elig-ring > div {
+    width: 112px; height: 112px; border-radius: 50%; background: #fff;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+}
+.stat-tile { background: #fff; border-radius: 14px; padding: 16px; text-align: center; height: 100%; }
+.stat-tile .num { font-size: 1.6rem; font-weight: 800; }
+.stat-tile .lbl { font-size: .78rem; color: #6c757d; }
