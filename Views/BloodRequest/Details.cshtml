@@ -1,4 +1,4 @@
-@model BloodDonationManagement.ViewModels.RequestDetailsViewModel
+﻿@model BloodDonationManagement.ViewModels.RequestDetailsViewModel
 @using BloodDonationManagement.Services
 @{
     ViewData["Title"] = "Blood Request Details";
@@ -47,7 +47,17 @@
                             <span class="badge bg-dark"><i class="fas fa-gem me-1"></i>Rare group</span>
                         }
                     </div>
-                    <h1 class="h3 mb-1">@r.PatientName</h1>
+                    <h1 class="h3 mb-1">
+                        @if (Model.CanSeeContact)
+                        {
+                            @r.PatientName
+                        }
+                        else
+                        {
+                            <span>@r.BloodGroup blood needed</span>
+                            <span class="small opacity-75 ms-1" title="Patient name is shared with donors after they accept"><i class="fas fa-lock"></i></span>
+                        }
+                    </h1>
                     <div class="opacity-75">
                         <i class="fas fa-hospital me-1"></i>@(r.HospitalName ?? "Hospital not specified")
                         @if (r.District != null)
@@ -162,13 +172,14 @@
                     <dl class="row small mb-0">
                         <dt class="col-5">Contact</dt>
                         <dd class="col-7">
-                            @if (Model.IsAuthenticated)
+                            @if (Model.CanSeeContact)
                             {
                                 <a href="tel:@r.ContactNo">@r.ContactNo</a>
                             }
                             else
                             {
-                                @PrivacyHelper.MaskPhone(r.ContactNo) <span class="text-muted">(login to view)</span>
+                                <span class="text-muted"><i class="fas fa-lock me-1"></i>@PrivacyHelper.MaskPhone(r.ContactNo)</span>
+                                <div class="text-muted">Shown to you after you accept this request.</div>
                             }
                         </dd>
                         <dt class="col-5">Units needed</dt>

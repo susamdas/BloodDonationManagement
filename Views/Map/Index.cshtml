@@ -171,8 +171,8 @@
                     count++;
                     requestLayer.add(map.marker(r.latitude, r.longitude, {
                         color: urgencyColor[r.urgency] || '#dc3545', label: r.bloodGroup, size: 16, zIndex: 10, pulse: r.urgency === 2,
-                        title: r.patientName,
-                        html: '<div style="min-width:190px"><h6 class="mb-1">' + esc(r.hospital || r.patientName) + '</h6>' +
+                        title: r.hospital || ('Request #' + r.bloodRequestId),
+                        html: '<div style="min-width:190px"><h6 class="mb-1">' + esc(r.hospital || ('Blood request #' + r.bloodRequestId)) + '</h6>' +
                             '<span class="badge bg-danger me-1">' + esc(r.bloodGroup) + '</span>' +
                             '<span class="badge" style="background:' + urgencyColor[r.urgency] + '">' + urgencyLabel[r.urgency] + '</span>' +
                             '<div class="mt-2"><i class="fas fa-map-marker-alt me-1 text-muted"></i>' + esc(r.district) + '</div>' +

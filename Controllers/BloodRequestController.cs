@@ -20,6 +20,7 @@ namespace BloodDonationManagement.Controllers
         private readonly EligibilityService _eligibility;
         private readonly NotificationService _notifications;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly AuditService _audit;
 
         public BloodRequestController(
             ApplicationDbContext context,
@@ -27,8 +28,10 @@ namespace BloodDonationManagement.Controllers
             DonorMatchingService matching,
             EligibilityService eligibility,
             NotificationService notifications,
-            UserManager<IdentityUser> userManager)
+            UserManager<IdentityUser> userManager,
+            AuditService audit)
         {
+            _audit = audit;
             _context = context;
             _hub = hub;
             _matching = matching;
@@ -42,6 +45,25 @@ namespace BloodDonationManagement.Controllers
 
         private bool CanManage(BloodRequest r) =>
             IsAdmin || (!string.IsNullOrEmpty(r.RequesterUserId) && r.RequesterUserId == CurrentUserId);
+
+        /// <summary>
+        /// Privacy rule: patient name and requester phone are visible only to the requester, admins,
+        /// and donors who have accepted that request.
+        /// </summary>
+        private async Task<HashSet<int>> ContactVisibleRequestIdsAsync(List<int> requestIds)
+        {
+            if (CurrentUserId == null || requestIds.Count == 0) return new HashSet<int>();
+            if (IsAdmin) return requestIds.ToHashSet();
+
+            var own = await _context.BloodRequests
+                .Where(r => requestIds.Contains(r.BloodRequestId) && r.RequesterUserId == CurrentUserId)
+                .Select(r => r.BloodRequestId).ToListAsync();
+            var accepted = await _context.DonorResponses
+                .Where(x => requestIds.Contains(x.BloodRequestId) && x.Donor!.UserId == CurrentUserId
+                            && (x.Status == ResponseStatus.Accepted || x.Status == ResponseStatus.Confirmed))
+                .Select(x => x.BloodRequestId).ToListAsync();
+            return own.Concat(accepted).ToHashSet();
+        }
 
         // ------------------------------------------------------------------ List
 
@@ -76,6 +98,7 @@ namespace BloodDonationManagement.Controllers
                 .Take(pageSize)
                 .ToListAsync();
 
+            ViewBag.VisibleIds = await ContactVisibleRequestIdsAsync(requests.Select(r => r.BloodRequestId).ToList());
             ViewBag.Status = status;
             ViewBag.Page = page;
             ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
@@ -124,6 +147,8 @@ namespace BloodDonationManagement.Controllers
                 }
             }
 
+            vm.CanSeeContact = vm.CanManage
+                || vm.MyResponse?.Status is ResponseStatus.Accepted or ResponseStatus.Confirmed;
             vm.Timeline = BuildTimeline(request);
             vm.IsOwner = !string.IsNullOrEmpty(request.RequesterUserId) && request.RequesterUserId == CurrentUserId;
             if (CurrentUserId != null)
@@ -198,6 +223,8 @@ namespace BloodDonationManagement.Controllers
             // Smart Matching: automatically notify the top-ranked donors
             var match = await _matching.FindMatchesAsync(request);
             var notifiedCount = await NotifyDonorsAsync(request, match.Matches.Take(_matching.Options.NotifyTopN));
+            await _audit.LogAsync(AuditActions.RequestCreated, "Request", request.BloodRequestId,
+                $"Posted {request.Urgency} {request.BloodGroup} request ({request.UnitsNeeded} unit/s); {match.Matches.Count} matched, {notifiedCount} alerted");
 
             // Live broadcast to everyone watching this district (public feed)
             var district = request.DistrictId.HasValue ? await _context.Districts.FindAsync(request.DistrictId.Value) : null;
@@ -205,7 +232,6 @@ namespace BloodDonationManagement.Controllers
             {
                 request.BloodRequestId,
                 request.BloodGroup,
-                request.PatientName,
                 District = district?.Name ?? "Unknown",
                 Urgency = request.Urgency.ToString(),
                 Hospital = request.HospitalName ?? ""
@@ -365,6 +391,8 @@ namespace BloodDonationManagement.Controllers
 
             if (accept)
             {
+                await _audit.LogAsync(AuditActions.ContactShared, "Request", id,
+                    $"Donor {donor.FullName} ({donor.BloodGroup}) accepted request #{id}; contact details shared between donor and requester");
                 await _notifications.NotifyAsync(
                     request.RequesterUserId,
                     "A donor accepted your request",
@@ -426,6 +454,9 @@ namespace BloodDonationManagement.Controllers
             }
             await _context.SaveChangesAsync();
 
+            await _audit.LogAsync(AuditActions.DonationConfirmed, "Request", id,
+                $"Confirmed donation by {response.Donor.FullName} for request #{id} ({confirmed}/{request.UnitsNeeded} units)");
+
             await _notifications.NotifyAsync(
                 response.Donor.UserId,
                 "Thank you, lifesaver! ❤️",
@@ -452,6 +483,8 @@ namespace BloodDonationManagement.Controllers
                 request.Status = RequestStatus.Cancelled;
                 request.FulfilledAt = DateTime.Now;
                 await _context.SaveChangesAsync();
+                await _audit.LogAsync(AuditActions.RequestCancelled, "Request", id,
+                    IsAdmin && request.RequesterUserId != CurrentUserId ? $"Admin cancelled request #{id}" : $"Requester cancelled request #{id}");
                 TempData["InfoMessage"] = "Request cancelled.";
             }
             return RedirectToAction(nameof(Details), new { id });
@@ -495,6 +528,8 @@ namespace BloodDonationManagement.Controllers
                 Details = string.IsNullOrWhiteSpace(details) ? null : details.Trim()[..Math.Min(details.Trim().Length, 500)]
             });
             await _context.SaveChangesAsync();
+
+            await _audit.LogAsync(AuditActions.RequestReported, "Request", id, $"Reported request #{id}: {reason}");
 
             // Alert all admins
             var link = Url.Action("Reports", "Admin");
@@ -549,6 +584,8 @@ namespace BloodDonationManagement.Controllers
             request.IsVerified = input.IsVerified;
 
             await _context.SaveChangesAsync();
+            await _audit.LogAsync(AuditActions.RequestEdited, "Request", id,
+                $"Edited request #{id} (status {request.Status}, urgency {request.Urgency}, verified {request.IsVerified})");
             TempData["SuccessMessage"] = "Blood request updated.";
             return RedirectToAction(nameof(Details), new { id });
         }
@@ -562,6 +599,8 @@ namespace BloodDonationManagement.Controllers
             if (request == null) return NotFound();
             request.IsVerified = !request.IsVerified;
             await _context.SaveChangesAsync();
+            await _audit.LogAsync(request.IsVerified ? AuditActions.RequestVerified : AuditActions.RequestUnverified, "Request", id,
+                request.IsVerified ? $"Marked request #{id} as verified" : $"Removed verification from request #{id}");
             TempData["SuccessMessage"] = request.IsVerified ? "Request marked as verified." : "Verification removed.";
             return RedirectToAction(nameof(Details), new { id });
         }
@@ -586,8 +625,10 @@ namespace BloodDonationManagement.Controllers
             var request = await _context.BloodRequests.FindAsync(id);
             if (request != null)
             {
+                var summary = $"Deleted request #{id} ({request.BloodGroup}, {request.HospitalName ?? "no hospital"}, status {request.Status})";
                 _context.BloodRequests.Remove(request);
                 await _context.SaveChangesAsync();
+                await _audit.LogAsync(AuditActions.RequestDeleted, "Request", id, summary);
                 TempData["SuccessMessage"] = "Blood request deleted.";
             }
             return RedirectToAction(nameof(Index));
@@ -604,6 +645,7 @@ namespace BloodDonationManagement.Controllers
                 request.Status = RequestStatus.Fulfilled;
                 request.FulfilledAt = DateTime.Now;
                 await _context.SaveChangesAsync();
+                await _audit.LogAsync(AuditActions.RequestFulfilledByAdmin, "Request", id, $"Admin marked request #{id} as fulfilled");
                 TempData["SuccessMessage"] = "Blood request marked as fulfilled!";
             }
             return RedirectToAction(nameof(Index));

@@ -1,6 +1,8 @@
 ﻿@model IEnumerable<BloodDonationManagement.Models.BloodRequest>
+@using BloodDonationManagement.Services
 @using BloodDonationManagement.Models
 @{
+    var visible = (HashSet<int>?)ViewBag.VisibleIds ?? new HashSet<int>();
     ViewData["Title"] = "Blood Requests";
     Layout = "~/Views/Shared/_MainLayout.cshtml";
     ViewBag.ShowHero = false;
@@ -84,7 +86,7 @@
                     <thead class="table-light">
                         <tr>
                             <th>Urgency</th>
-                            <th>Patient</th>
+                            <th>Request</th>
                             <th>Blood Group</th>
                             <th>Hospital / Location</th>
                             <th>Contact</th>
@@ -124,7 +126,15 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <strong>@req.PatientName</strong>
+                                    @if (visible.Contains(req.BloodRequestId))
+                                    {
+                                        <strong>@req.PatientName</strong>
+                                    }
+                                    else
+                                    {
+                                        <strong>Request #@req.BloodRequestId</strong>
+                                        <i class="fas fa-lock text-muted small ms-1" title="Patient details are shared with donors who accept"></i>
+                                    }
                                     @if (req.IsVerified)
                                     {
                                         <i class="fas fa-check-circle text-primary ms-1" title="Verified by admin"></i>
@@ -148,9 +158,16 @@
                                     </small>
                                 </td>
                                 <td>
-                                    <a href="tel:@req.ContactNo" class="text-decoration-none">
-                                        <i class="fas fa-phone me-1 text-success"></i>@req.ContactNo
-                                    </a>
+                                    @if (visible.Contains(req.BloodRequestId))
+                                    {
+                                        <a href="tel:@req.ContactNo" class="text-decoration-none">
+                                            <i class="fas fa-phone me-1 text-success"></i>@req.ContactNo
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted" title="Shown after you accept this request"><i class="fas fa-lock me-1"></i>@PrivacyHelper.MaskPhone(req.ContactNo)</span>
+                                    }
                                 </td>
                                 <td>
                                     <span class="badge bg-@statusBg">@statusLabel</span>
